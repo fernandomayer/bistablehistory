@@ -1,6 +1,7 @@
 //
 // This Stan program defines the base model for cumulative
-// history computation without random and fixed factor.
+// history computation without random and fixed factor (apart
+// from history).
 // It supports for distribution families:
 //   1. Normal.
 //   2. Gamma.
