@@ -1,0 +1,37 @@
+Package: bistablehistory
+Title: Cumulative History for Bistable Perceptual Rivalry
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Alexander",
+           family = "Pastukhov",
+           role = c("aut", "cre"),
+           email = "pastukhov.alexander@gmail.com",
+           comment = c(ORCID = "0000-0002-8738-8591"))
+Description: Estimates cumulative history for time-series for continuously
+    viewed bistable perceptual rivalry displays. Assumes negative exponential 
+    growth/decay of the history as a function time and perceptually dominant
+    state. Supports Gamma, log normal, exponentially modulate Gaussian, and 
+    normal distribution families. Currently can include a single random 
+    and/or single fixed effect.
+License: `use_gpl3_license()`
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.0
+Biarch: true
+Depends: 
+    R (>= 3.4.0)
+Imports: 
+    methods,
+    Rcpp (>= 0.12.0),
+    RcppParallel (>= 5.0.1),
+    rstan (>= 2.18.1),
+    rstantools (>= 2.1.1)
+LinkingTo: 
+    BH (>= 1.66.0),
+    Rcpp (>= 0.12.0),
+    RcppEigen (>= 0.3.3.3.0),
+    RcppParallel (>= 5.0.1),
+    rstan (>= 2.18.1),
+    StanHeaders (>= 2.18.0)
+SystemRequirements: GNU make
