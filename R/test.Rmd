@@ -1,0 +1,80 @@
+---
+  title: "History in STAN"
+author: "Alexander (Sasha) Pastukhov"
+date: "21 9 2020"
+output: html_document
+---
+
+  ```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(Rcpp)
+library(rstan)
+library(tidyverse)
+```
+## Utilities
+```{r utilities}
+source("history_utils.R")
+```
+
+## Constants
+```{r constants}
+mixed_state <- -2
+mixed_value <- 0
+taus <- c(1)
+```
+
+
+```{r}
+reports <- read_csv("KD_BR_NC.csv",
+                    col_types = cols(Observer = col_character(),
+                                     Display = col_character(),
+                                     Block = col_double(),
+                                     Time = col_double(),
+                                     State = col_double(),
+                                     Duration = col_double())) %>%
+  # renaming `Display` into `Group`
+  rename(Group = Display) %>%
+
+  # dropping zero durations
+  filter(Duration > 0) %>%
+
+  # converting state code from 1:-1 to 1:2 (allows direct indexing)
+  # -2 is still an unclear state
+  mutate(iState = as.factor(State),
+         iState = fct_relevel(iState, as.character(mixed_state), after=Inf),
+         iState = as.integer(iState)) %>%
+
+  # readjusting duration based on rounded time (1 ms won't make much difference)
+  group_by(Observer, Group, Block) %>%
+  mutate(Time = round(Time)/1000,
+         Duration  = lead(Time) - Time) %>%
+
+  # computing mean duration that will be used together with normalized tau
+  group_by(Observer, Group) %>%
+  mutate(IsClear = State != mixed_state,
+         Tmean = mean(Duration[IsClear], na.rm=TRUE)) %>%
+
+  # marking out durations eligible for the analysis
+  mutate(IsValid = IsClear) %>%
+  ungroup() %>%
+  mutate(iRow = 1:n())
+
+test_reports <-
+  reports %>%
+  filter(Observer == "ap", Group == "BR") %>%
+
+  # making sure that  duration is a finite number (no NA for the last onset)
+  mutate(Duration = replace_na(Duration, 0)) %>%
+
+  # marking out start of an individual time-series
+  group_by(Observer, Group, Block) %>%
+  mutate(timeseries_start = as.integer(c(1, rep(0, n()-1)))) %>%
+
+  # history should be retained only for clear states and for the THIRD and up percept, to ensure they are different from 0
+  group_by(Observer, Group, Block, iState) %>%
+  mutate(iPercept = 1:n(),
+         log_history = (iState != 3) & (iPercept > 2) & (Duration>0)) %>%
+
+  ungroup()
+```
