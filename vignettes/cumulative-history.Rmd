@@ -1,0 +1,85 @@
+---
+title: "Cumulative History"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{cumulative-historu}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+knitr::opts_chunk$set(echo = FALSE)
+library(dplyr)
+library(ggplot2)
+```
+
+The cumulative history for a perceptual state is computed via a homogeneous first order process:
+$$\frac{dx_i}{dt} = \frac{1}{\tau} (-x_i + S_i(t))$$
+
+where $\tau$ is the time constant, $x_i$ is cumulative history and $S_i(t)$ is current signal level for the state _i_, so that
+$$S(t) = \begin{cases}
+  1 & \text{if state $i$ is dominant}\\
+  0 & \text{if state $i$ is suppessed}\\
+  S_{mixed} & \text{if it is a mixed/transition phase and $0 ≥ S_{mixed} ≥1 $}
+\end{cases}$$
+
+The general solution for the equation is
+
+$$
+x_i(t) = A e^{-t/\tau} + \frac{1}{\tau} \int_{0}^{t} e^{-(t'-t)/\tau} S(t') dt'
+$$
+
+Assuming a constant signal $S$, we obtain
+$$
+x_i(t) = A e^{-t/\tau} + S (1 - e^{-t/\tau})
+$$
+
+In our case, we are interested in change of cumulative history during a particular dominance phase that start at time $t$ and end at time $t + \Delta t$. Solving for initial condition $x_i(t)$ and $S$:
+$$x_i(t + \Delta t) = x_i(t) + (S - x_i(t)) \cdot (1 - e^{-\Delta t/\tau})\\
+x_i(t + \Delta t) = S + (x_i(t) - S)  \cdot e^{-\Delta t/\tau}
+$$
+
+
+```{r}
+t <- seq(0, 20, length.out=100)
+df <- 
+  data.frame(x0 = c(0, 0.7, 0.9), S = c(1, 0, 0.5), tau = c(1, 4, 2)) %>%
+  group_by(x0, S, tau) %>%
+  summarise(x0 = x0[1],
+            S = S[1],
+            tau = tau[1],
+            t = t,
+            x = S + (x0 - S) * exp(-t / tau),
+            Parameters = sprintf("x(0) = %.1f, S = %.1f, tau = %d", x0[1], S[1], tau[1]))
+
+ggplot(df, aes(x=t, y=x, color=Parameters)) + 
+  geom_line() + 
+  xlab("Δt [s]") +
+  ylab("x(t + Δt)") + 
+  ylim(0, 1)
+```
+
+
+```{r}
+x0 <- 0.8
+t <- seq(0, 20, length.out=100)
+tau <- 2
+S <- 0
+
+x <- x0 + (S - x0) * (1 - exp(-t / tau))
+
+x <- x0 + S - x0 + x0 * exp(-t / tau) - S * exp(-t / tau)
+
+x <- S  + x0 * exp(-t / tau) - S * exp(-t / tau)
+
+x2 <- S + (x0 - S) * exp(-t / tau)
+
+plot(t, x, "o")
+```
