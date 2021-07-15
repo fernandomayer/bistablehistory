@@ -1,22 +1,26 @@
 Package: bistability
-Title: What the Package Does (One Line, Title Case)
+Title: Cumulative History Analaysis For Bistable Perception Timeseries
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Alexander",
+           family = "Pastukhov",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+           email = "pastukhov.alexander@gmail.com",
+           comment = c(ORCID = "0000-0002-8738-8591"))
+Description: Estimates cumulative history for time-series for continuously
+    viewed bistable perceptual rivalry displays. Computes cumulative history
+    via a homogeneous first order differential process. I.e., it assumes
+    exponential growth/decay of the history as a function time and perceptually
+    dominant state. Supports Gamma, log normal, exponentially modulate Gaussian,
+    and normal distribution families.
+License: `use_gpl3_license()`
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 Biarch: true
 Depends: 
-    R (>= 3.4.0)
+    R (>= 4.1.0)
 Imports: 
     methods,
     Rcpp (>= 0.12.0),
@@ -31,3 +35,8 @@ LinkingTo:
     rstan (>= 2.18.1),
     StanHeaders (>= 2.18.0)
 SystemRequirements: GNU make
+Suggests: 
+    rmarkdown,
+    knitr,
+    testthat
+VignetteBuilder: knitr
