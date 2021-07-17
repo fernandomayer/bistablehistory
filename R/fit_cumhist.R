@@ -38,12 +38,14 @@
 #' assumes that run IDs are different within an experimental session but
 #' can be the same between the session. E.g. session A, runs 1, 2, 3.. and
 #' session B, runs 1, 2, 3 but not session A, runs 1, 2, 1.
-#' @param norm_tau Time constant of negative exponential growth/decay
+#' @param tau Time constant of exponential growth/decay
 #' normalized to the mean duration of clear percepts within each \code{session}.
-#' Either a single positive number (>0) that will be used as is or a vector
-#' of two numbers \code{c(shape, scale)} that specifies, correspondingly,
-#' shape and scale of the gamma distribution it should be sampled from.
-#' Defaults to \code{c(5, 0.2)}.
+#' Can be 1) a single positive number (>0) that is used for all participants and runs,
+#' 2) \code{NULL} (default) -  a _single_ value will be fitted for all participants and runs,
+#' 3) \code{"random"} - an independent tau is fitted for each random cluster,
+#' 4) \code{"1|random"}- a tau for a random cluster
+#' is sampled from a population distribution, i.e., pooled parameter values via
+#' a multilevel model.
 #' @param mixed_state Specifies an activation level during
 #' transition/mixed phases (state #3, see \code{state}). Either a single
 #' number (range [0..1]) that will be used as a fixed level or a vector
@@ -83,9 +85,9 @@ fit_cumhist <- function(data,
                         session=NULL,
                         run=NULL,
                         fixed_effects=NULL,
-                        norm_tau=c(5, 0.2),
+                        tau=NULL,
                         mixed_state=0.5,
-                        history_mix=0.0,
+                        history_mix=0.5,
                         history_init=0,
                         family="gamma",
                         chains=4,
@@ -147,13 +149,13 @@ fit_cumhist <- function(data,
   ## --- 4. Check whether we have information about random_effect ---
   if (is.null(random_effect)) {
     # A single experimental session
-    cumhist$data$random_effect <- as.integer(1)
+    cumhist$data$random <- as.integer(1)
   }
   else {
     # check that column with this name exists
     if (!random_effect %in% colnames(data)) stop(sprintf("Column '%s' for random effect variable is not in the table", random_effect))
     if (sum(is.na(data[[random_effect]]))>0) stop("Random effect column contains NAs")
-    cumhist$data$random_effect <- as.integer(as.factor(data[[random_effect]]))
+    cumhist$data$random <- as.integer(as.factor(data[[random_effect]]))
   }
 
   ## --- 5. Check whether we have information about experimental sessions ---
@@ -200,11 +202,11 @@ fit_cumhist <- function(data,
     cumhist$data %>%
 
     # making sure last duration is 0 (as we won't be using it for fitting  anyhow)
-    dplyr::group_by(random_effect, session, run) %>%
+    dplyr::group_by(random, session, run) %>%
     dplyr::mutate(duration = ifelse(dplyr::row_number()==dplyr::n(), 0, duration)) %>%
 
     # computing average clear percept duration for each experimental session
-    dplyr::group_by(random_effect, session) %>%
+    dplyr::group_by(random, session) %>%
     dplyr::mutate(session_tmean = mean(duration[state<3], na.rm=TRUE)) %>%
 
     # marking out percept that will be used to fit history
@@ -214,19 +216,23 @@ fit_cumhist <- function(data,
     dplyr::mutate(is_used = state != 3) %>%
 
     # * first durations for each state (as they had no chance to be properly history dependent)
-    dplyr::group_by(random_effect, session, run, state) %>%
+    dplyr::group_by(random, session, run, state) %>%
     dplyr::mutate(is_used = ifelse(dplyr::row_number()==1, FALSE, is_used)) %>%
 
     # * last duration in each block (as it is not used for predictions)
-    dplyr::group_by(random_effect, session, run) %>%
+    dplyr::group_by(random, session, run) %>%
     dplyr::mutate(is_used = ifelse(dplyr::row_number()==dplyr::n(), FALSE, is_used)) %>%
 
     # replacing any NAs with zeros
     dplyr::mutate(duration = tidyr::replace_na(duration, 0)) %>%
 
     # add time series start flag (first element for each run)
-    dplyr::group_by(random_effect, session, run) %>%
-    dplyr::mutate(run_start  = ifelse(dplyr::row_number()==1, 1, 0))
+    dplyr::group_by(random, session, run) %>%
+    dplyr::mutate(run_start  = ifelse(dplyr::row_number()==1, 1, 0))   %>%
+
+    # turn data into the list
+    dplyr::ungroup() %>%
+    as.list()
 
 
   ## --- 8. Second durations check ---
@@ -236,74 +242,23 @@ fit_cumhist <- function(data,
   if (sum(cumhist$data$duration < 0) > 0) stop("Table contains negative durations.")
   if (sum(cumhist$data$duration[cumhist$data$is_used] == 0) > 0) stop("Table contains zero durations for clear states. Check original duration column for 0 and NAs or, perhaps, you forgot to specify participant/session/run variable(s)?")
 
-  ## --- 9. Check norm_tau or prior distribution parameters are specified
-  if (!is.numeric(norm_tau)) stop("norm_tau parameter must be numeric scalar or two element vector")
-  if (length(norm_tau) > 2) stop("norm_tau parameter must be numeric scalar or two element vector")
-  if (length(norm_tau) == 1) {
-    # fixed value
-    if (norm_tau <= 0) stop("Fixed norm_tau parameter must be strictly positive")
-    if (!is.finite(norm_tau)) stop("Fixed norm_tau parameter must be a finite strictly positive number")
-  }
-  else {
-    # prior
-    if (sum(norm_tau <= 0) > 0) stop("Parameters for norm_tau Gamma prior distribution must be strictly positive")
-    if (sum(!is.finite(norm_tau))>0) stop("Parameters for norm_tau Gamma prior distribution must be finite strictly positive numbers")
-  }
 
-  ## --- 9. Check fixed parameters or prior distribution parameters
-  # bistablehistory::check_fixed_or_beta_prior(mixed_state, "mixed_state")
-  # bistablehistory::check_fixed_or_beta_prior(history_mix, "history_mix")
-  # bistablehistory::check_fixed_or_gamma_prior(norm_tau, "norm_tau")
+  ## --- 9. Store number of random clusters ---
+  cumhist$data$randomN <- length(unique(cumhist$data$random))
+
+  ## --- 10. History parameters ---
+  cumhist$data <- c(cumhist$data,
+                    bistablehistory::evaluate_history_option("tau", tau, cumhist$data$randomN, Inf),
+                    bistablehistory::evaluate_history_option("mixed_state", mixed_state, cumhist$data$randomN, 1),
+                    bistablehistory::evaluate_history_option("history_mix", history_mix, cumhist$data$randomN, 1))
 
   # --- 10. Check history_init
-  # history_init <- bistablehistory::check_history_init(history_init)
+  cumhist$data$history_starting_values <- bistablehistory::evaluate_history_init(history_init)
 
   ## --- 11. Check selected distribution
   supported_families <- c("gamma"=1, "lognormal"=2, "exgauss"=3, "normal"=4)
   if (!family %in% names(supported_families)) stop(sprintf("Unsupported distribution family '%s'", family))
 
-
-
-  # ----------------------------- Preparing cumhist$data -----------------------------
-  cumhist$data <-
-    cumhist$data %>%
-    dplyr::ungroup() %>%
-    dplyr::select(duration, state, is_used, run_start, session_tmean, random_effect) %>%
-
-    # converting is_used to integer (for stan)
-    dplyr::mutate(is_used = as.integer(is_used)) %>%
-    as.list()
-  cumhist$data$rowsN <- length(cumhist$data$duration)
-  cumhist$data$randomN <- length(levels(cumhist$data$random))
-
-  # clear durations used for fittings
-  cumhist$data$clearN <- sum(cumhist$data$is_used)
-  cumhist$data$clear_duration <- cumhist$data$duration[cumhist$data$is_used == 1]
-
-  # history parameters
-  cumhist$data <- c(cumhist$data,
-                    bistablehistory::pass_gamma(norm_tau, "norm_tau"),
-                    bistablehistory::pass_beta_prop(mixed_state, "mixed_state"),
-                    bistablehistory::pass_beta_prop(history_mix, "history_mix"))
-  cumhist$data$history_starting_values <- history_init
-
-  # fixed effects
-  if (!is.null(fixed_effects)) {
-    cumhist$fixedN <- length(fixed_effects)
-    cumhist$fixed_names <- fixed_effects
-
-    cumhist$data$fixedN <- length(fixed_effects)
-    cumhist$data$fixed_effect <- as.matrix(data[cumhist$data$is_used == 1, fixed_effects])
-  }
-  else {
-    cumhist$fixedN <- 0
-    cumhist$fixed_names <- NULL
-  }
-
-
-  # ----------------------------- Selecting an appropiate model -----------------------------
-  # cumhist$family <- family
-  # stanmodel_name <- stringr::str_c("cumhist", family, fit_fixed, fit_random, sep="_")
 
 
   # ----------------------------- Sampling -----------------------------
