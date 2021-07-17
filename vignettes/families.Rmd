@@ -1,0 +1,36 @@
+---
+title: "Dominance Phase Duration Distributions"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Dominance Phase Duration Distributions}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+```
+
+## Gamma distribution with linear model fr both _shape_ and _rate_ parameters.
+
+Option `"gamma both"`
+
+
+```{r}
+test <- function(x){
+  typeof(x)
+  formula(x)
+  # Formula::Formula(x)
+  # Formula::model.part(model_formula, data = data, rhs = 1)
+}
+
+attr(terms(test(~Participant)), "factors")
+
+terms(y)
+```
