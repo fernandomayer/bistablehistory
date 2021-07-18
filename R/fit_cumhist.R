@@ -250,12 +250,17 @@ fit_cumhist <- function(data,
   cumhist$data <- c(cumhist$data,
                     bistablehistory::evaluate_history_option("tau", tau, cumhist$data$randomN, Inf),
                     bistablehistory::evaluate_history_option("mixed_state", mixed_state, cumhist$data$randomN, 1),
-                    bistablehistory::evaluate_history_option("history_mix", history_mix, cumhist$data$randomN, 1))
+                    bistablehistory::evaluate_history_option("history_mix", history_mix, cumhist$data$randomN, 1),
+                    list("tau_prior"=c(log(1), 0.75),
+                         "mixed_state_prior"=c(0, 1),
+                         "history_mix_prior"=c(0, 1)))
 
-  # --- 10. Check history_init
+
+
+  # --- 11. Check history_init
   cumhist$data$history_starting_values <- bistablehistory::evaluate_history_init(history_init)
 
-  ## --- 11. Check selected distribution
+  ## --- 12. Check selected distribution
   supported_families <- c("gamma"=1, "lognormal"=2, "exgauss"=3, "normal"=4)
   if (!family %in% names(supported_families)) stop(sprintf("Unsupported distribution family '%s'", family))
 
