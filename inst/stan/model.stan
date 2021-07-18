@@ -29,16 +29,25 @@ data{
     // --- Cumulative history parameters
     real<lower=0, upper=1> history_starting_values[2]; // Starting values for cumulative history at the beginning of the run
 
-    int<lower=1, upper=4> tau_option;            // 1 - constant provided by user, 2 - fit single tau for all, 3 - independent taus, 4 - pooled (multilevel) taus
-    real<lower=0> fixed_tau;                     // a fixed option (tau_option == 1)
+    int<lower=1, upper=4> tau_option;  // 1 - constant provided by user, 2 - fit single tau for all, 3 - independent taus, 4 - pooled (multilevel) taus
+    real<lower=0> fixed_tau;           // a fixed option (tau_option == 1)
+    int tau_mu_size;                   // dimensionality, 1 - sampled, 0 - unused
+    int tau_sigma_size;                // dimensionality, 1 - sampled, 0 - unused 
+    int tau_rnd_size;                  // dimensionality, randomN - sampled, 0 - unused
 
     // mixed state
     int<lower=1, upper=4> mixed_state_option; // 1 - constant provided by user, 2 - fit single tau for all, 3 - independent taus, 4 - pooled (multilevel) taus
     real<lower=0, upper=1> fixed_mixed_state; // a fixed option (tau_option == 1)
+    int mixed_state_mu_size;                  // dimensionality, 1 - sampled, 0 - unused
+    int mixed_state_sigma_size;               // dimensionality, 1 - sampled, 0 - unused
+    int mixed_state_rnd_size;                 // dimensionality, randomN - sampled, 0 - unused
 
     // history-mixing proportion, used as history_mix * history_same - (1-history_mix) * history_different
     int<lower=1, upper=4> history_mix_option; // 1 - constant provided by user, 2 - fit single tau for all, 3 - independent taus, 4 - pooled (multilevel) taus
     real<lower=0, upper=1> fixed_history_mix; // fixed proportion of history mixing (tau_option == 1)
+    int history_mix_mu_size;                  // dimensionality, 1 - sampled, 0 - unused
+    int history_mix_sigma_size;               // dimensionality, 1 - sampled, 0 - unused
+    int history_mix_rnd_size;                 // dimensionality, randomN - sampled, 0 - unused
 
     // --- Fixed effects
     int<lower=1, upper=2> fixed_option; // 1 - fit single population-level value, 2 - pooled (multilevel) effects
@@ -63,88 +72,6 @@ transformed data {
     // Options for fitting fixed effects
     int fSingle = 1;
     int fPooled = 2;
-
-    // --- Dimensionality of vectors, 0 means not used. ---
-    // Normalized tau
-    int tau_mu_size;
-    int tau_sigma_size;
-    int tau_rnd_size;
-    { // computing sizes for tau parameters
-        if (tau_option == oConstant) {
-            tau_mu_size = 0;
-            tau_sigma_size = 0;
-            tau_rnd_size = 0;
-        }
-        else if (tau_option == oSingle) {
-            tau_mu_size = 1;
-            tau_sigma_size = 0;
-            tau_rnd_size = 0;
-        }
-        else if (tau_option == oIndependent) {
-            tau_mu_size = 0;
-            tau_sigma_size = 0;
-            tau_rnd_size = randomN;
-        }
-        else {
-            tau_mu_size = 1;
-            tau_sigma_size = 1;
-            tau_rnd_size = randomN;
-        }
-    }
-
-    // Mixed state
-    int mixed_state_mu_size;
-    int mixed_state_sigma_size;
-    int mixed_state_rnd_size;
-    { // computing size for mixed state parameters
-        if (mixed_state_option == oConstant) {
-            mixed_state_mu_size = 0;
-            mixed_state_sigma_size = 0;
-            mixed_state_rnd_size = 0;
-        }
-        else if (mixed_state_option == oSingle) {
-            mixed_state_mu_size = 1;
-            mixed_state_sigma_size = 0;
-            mixed_state_rnd_size = 0;
-        }
-        else if (mixed_state_option == oIndependent) {
-            mixed_state_mu_size = 0;
-            mixed_state_sigma_size = 0;
-            mixed_state_rnd_size = randomN;
-        }
-        else {
-            mixed_state_mu_size = 1;
-            mixed_state_sigma_size = 1;
-            mixed_state_rnd_size = randomN;
-        }
-    }
-
-    // History mixture
-    int history_mix_mu_size;
-    int history_mix_sigma_size;
-    int history_mix_rnd_size;
-    { // computing size for history mixture parameters
-        if (history_mix_option == oConstant) {
-            history_mix_mu_size = 0;
-            history_mix_sigma_size = 0;
-            history_mix_rnd_size = 0;
-        }
-        else if (history_mix_option == oSingle) {
-            history_mix_mu_size = 1;
-            history_mix_sigma_size = 0;
-            history_mix_rnd_size = 0;
-        }
-        else if (history_mix_option == oIndependent) {
-            history_mix_mu_size = 0;
-            history_mix_sigma_size = 0;
-            history_mix_rnd_size = randomN;
-        }
-        else {
-            history_mix_mu_size = 1;
-            history_mix_sigma_size = 1;
-            history_mix_rnd_size = randomN;
-        }
-    }
 
     // --- Family-specific number of parameters ---
     int paramsN = 2; // number of likelihood parameters to be fitted
