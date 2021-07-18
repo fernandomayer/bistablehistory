@@ -1,3 +1,31 @@
+functions {
+   vector expand_history_param_to_individuals(int option, real fixed_value, vector mu, vector sigma, vector rnd, int randomN, int link_function){
+       // Uses option and parameters to compute value for each individual
+       vector[randomN] ind;
+       if (option == 1) { // oConstant
+           ind = rep_vector(fixed_value, randomN);
+           return ind;
+       }
+       else if (option == 2) { // oSingle
+           ind = rep_vector(mu[1], randomN);
+       }
+       else if (option == 3) { // oIndependent
+           ind = rnd;
+       }
+       else {
+           // pooled: mean + variance * z-score
+           ind = mu[1] + sigma[1] * rnd;
+       }
+
+       // using link function
+       if (link_function == 1) { //lfExp
+           return exp(ind);
+       }
+       else {
+           return inv_logit(ind);
+       }
+   }
+}
 data{
     // --- Family choice ---
     int<lower=1, upper=6> family; 
@@ -73,6 +101,10 @@ transformed data {
     int fSingle = 1;
     int fPooled = 2;
 
+    // Link function codes
+    int lfLog = 1;
+    int lfLogit = 2;
+
     // --- Family-specific number of parameters ---
     int paramsN = 2; // number of likelihood parameters to be fitted
     { // dimensions for gamma distribution parameters
@@ -139,54 +171,10 @@ parameters {
     // vector[randomN] bHistory_rnd[(randomN > 1) && (fixed_option == fPooled) ? paramsN : 0]; // individuals
 }
 transformed parameters {
-   { // Cumulative history parameters
-       // tau
-       vector[randomN] tau_ind;
-       if (tau_option == oConstant) {
-           tau_ind = rep_vector(fixed_tau, randomN);
-       }
-       else if (tau_option == oSingle) {
-           tau_ind = rep_vector(exp(tau_mu[1]), randomN);
-       }
-       else if (tau_option == oIndependent) {
-           tau_ind = exp(tau_rnd);
-       }
-       else {
-           // pooled: mean + variance * z-score
-           tau_ind = exp(tau_mu[1] + tau_sigma[1] * tau_rnd);
-       }
-
-       // Mixed state
-       vector[randomN] mixed_state_ind;
-       if (mixed_state_option == oConstant) {
-           mixed_state_ind = rep_vector(fixed_mixed_state, randomN);
-       }
-       else if (mixed_state_option == oSingle) {
-           mixed_state_ind = rep_vector(inv_logit(mixed_state_mu[1]), randomN);
-       }
-       else if (mixed_state_option == oIndependent) {
-           mixed_state_ind = inv_logit(mixed_state_rnd);
-       }
-       else {
-           // pooled: mean + variance * z-score
-           mixed_state_ind = inv_logit(mixed_state_mu[1] + mixed_state_sigma[1] * mixed_state_rnd);
-       }
-
-       // History mixture
-       vector[randomN] history_mix_ind;
-       if (history_mix_option == oConstant) {
-           history_mix_ind = rep_vector(fixed_history_mix, randomN);
-       }
-       else if (history_mix_option == oSingle) {
-           history_mix_ind = rep_vector(inv_logit(history_mix_mu[1]), randomN);
-       }
-       else if (history_mix_option == oIndependent) {
-           history_mix_ind = inv_logit(history_mix_rnd);
-       }
-       else {
-           // pooled: mean + variance * z-score
-           history_mix_ind = inv_logit(history_mix_mu[1] + history_mix_sigma[1] * history_mix_rnd);
-       }
+   {   // Cumulative history parameters
+       vector[randomN] tau_ind = expand_history_param_to_individuals(tau_option, fixed_tau, tau_mu, tau_sigma, tau_rnd, randomN, lfLog);
+       vector[randomN] mixed_state_ind = expand_history_param_to_individuals(mixed_state_option, fixed_mixed_state, mixed_state_mu, mixed_state_sigma, mixed_state_rnd, randomN, lfLogit);
+       vector[randomN] history_mix_ind = expand_history_param_to_individuals(history_mix_option, fixed_history_mix, history_mix_mu, history_mix_sigma, history_mix_rnd, randomN, lfLogit);
    }
 }
 model {
