@@ -12,6 +12,7 @@ A data frame with 76 rows and 6 variables:
 \item{Block}{Run / block index, all rows contain \emph{1}}
 \item{Time}{Time relative to the run onset in \emph{seconds}}
 \item{State}{Index of a perceptually dominant state, \emph{1}, \emph{2} - clear perceptual state, \emph{3} mixed / transition phase}
+\item{Duration}{Duration of a dominance phase in \emph{seconds}. Note that the duration for the last dominance phase is curtailed and, therefore, set to zero.}
 }
 }
 \source{
