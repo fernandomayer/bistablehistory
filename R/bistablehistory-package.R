@@ -1,11 +1,11 @@
-#' The 'bistability' package.
+#' The 'bistablehistory' package.
 #'
 #' @description A DESCRIPTION OF THE PACKAGE
 #'
 #' @docType package
-#' @name bistability-package
-#' @aliases bistability
-#' @useDynLib bistability, .registration = TRUE
+#' @name bistablehistory-package
+#' @aliases bistablehistory
+#' @useDynLib bistablehistory, .registration = TRUE
 #' @import methods
 #' @import Rcpp
 #' @importFrom rstan sampling
