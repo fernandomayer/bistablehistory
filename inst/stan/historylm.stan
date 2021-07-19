@@ -40,6 +40,58 @@ functions {
            return inv_logit(ind);
        }
    }
+
+    /**
+    * Creates signal level matrix based on target state (row) and
+    *   dominant state (column). Uses 1 (maximum) if states match,
+    *   0 (minimum) if an opposite clear state is dominant,
+    *   mixed_value, if it is a transition.
+    * @param mixed_level. Signal level that corresponds to mixed
+    *   perception / transition. Real, range [0..1].
+    * @return A matrix[2, 3] with row for target state and column
+    *   for the dominant state.
+    */
+    matrix state_to_signal_levels(real mixed_level){
+        matrix [2, 3] signal_level;
+
+        signal_level[1, 1] = 1;
+        signal_level[1, 2] = 0;
+        signal_level[1, 3] = mixed_level;
+        signal_level[2, 1] = 0;
+        signal_level[2, 2] = 1;
+        signal_level[2, 3] = mixed_level;
+
+        return signal_level;
+    }
+
+    /**
+    * Computes next state of history assuming negative exponential growth/decay
+    *   with scale time constant (tau) from current level (history) to the
+    *   signal level (signal) following the next perceptual state duration
+    *   (duration).
+    * @param history Current value of history. Real, range [0..1].
+    * @param signal Signal level to which history grows/decays. Real,
+    *   range [0..1].
+    * @param duration Duration of the signal. Real, >0.
+    * @param tau Time constant (scale) of the negative exponential. Real, >0.
+    * @return Real value for history state after the signal.
+    */
+    real compute_history(real history, real signal, real duration, real tau){
+        if (history == signal){
+        // special case, history is already at the final reachable level
+        return history;
+        }
+        else if (history > signal) {
+        // decreasing history to the signal level
+            real  starting_x = -tau * log((history - signal) / (1-signal));
+            return (1 - signal) * exp(-(duration + starting_x) / tau) + signal;
+        }
+        else {
+        // increasing history to the signal level
+        real starting_x = -tau * log((signal - history)/signal);
+        return signal * (1- exp(-(duration + starting_x) / tau));
+        }
+    }
 }
 data{
     // --- Family choice ---
@@ -154,11 +206,50 @@ parameters {
     // vector[randomN] bHistory_rnd[(randomN > 1) && (fixed_option == fPooled) ? paramsN : 0]; // individuals
 }
 transformed parameters {
-   {   // Cumulative history parameters
-       vector[randomN] tau_ind = expand_history_param_to_individuals(tau_option, fixed_tau, tau_mu, tau_sigma, tau_rnd, randomN, lfLog);
-       vector[randomN] mixed_state_ind = expand_history_param_to_individuals(mixed_state_option, fixed_mixed_state, mixed_state_mu, mixed_state_sigma, mixed_state_rnd, randomN, lfLogit);
-       vector[randomN] history_mix_ind = expand_history_param_to_individuals(history_mix_option, fixed_history_mix, history_mix_mu, history_mix_sigma, history_mix_rnd, randomN, lfLogit);
-   }
+    vector[clearN] lm_param[paramsN];
+    {   
+        // Cumulative history parameters
+        vector[randomN] tau_ind = expand_history_param_to_individuals(tau_option, fixed_tau, tau_mu, tau_sigma, tau_rnd, randomN, lfLog);
+        vector[randomN] mixed_state_ind = expand_history_param_to_individuals(mixed_state_option, fixed_mixed_state, mixed_state_mu, mixed_state_sigma, mixed_state_rnd, randomN, lfLogit);
+        vector[randomN] history_mix_ind = expand_history_param_to_individuals(history_mix_option, fixed_history_mix, history_mix_mu, history_mix_sigma, history_mix_rnd, randomN, lfLogit);
+
+        // Service variables for computing cumulative history
+        matrix[2, 3] level;
+        real current_history[2];
+        real tau;
+        real hmix;
+
+        // Index of clear percepts
+        int iC = 1;
+
+        for(iT in 1:rowsN){
+            // new time-series, recompute absolute tau and reset history state
+            if (run_start[iT]){
+                current_history = history_starting_values;
+                tau = session_tmean[iT] * tau_ind[random[iT]];
+                level = state_to_signal_levels(mixed_state_ind[random[iT]]);
+            }
+
+            // for valid percepts, we use history for parameter computation
+            if (is_used[iT] == 1){
+                // history mixture
+                hmix = history_mix_ind[random[iT]] * current_history[state[iT]] +
+                      (1 - history_mix_ind[random[iT]]) * current_history[3-state[iT]];
+
+                // computing lm parameters
+                for(iP in 1:paramsN) {
+                     lm_param[iP][iC] = a[iP][random[iT]] + bHistory_ind[iP][random[iT]] * hmix;
+                }
+
+                iC += 1;
+            }
+
+            // computing history for the NEXT episode
+            for(iState in 1:2){
+                current_history[iState] = compute_history(current_history[iState], level[iState, state[iT]], duration[iT], tau);
+            }
+        }
+    }
 }
 model {
     {// tau
@@ -201,28 +292,12 @@ model {
         }
     }
 
-    // intercepts
+    // sampling intercepts
     for(iLM in 1:lmN) a[iLM] ~ normal(a_prior[iLM, 1], a_prior[iLM, 2]);
 
-    // if (randomN > 1) {
-    //     bHistory_sigma ~ exponential(1);
-    //     for(i in 1:history_term_size) bHistory_rnd[i] ~ normal(0, 1);
-    // }
-    
-    //     // history term
-    // bHistory ~ normal(0, 1);
-    // if (randomN > 1) {
-    //     bHistory_sigma ~ exponential(1);
-    //     for(i in 1:history_term_size) bHistory_rnd[i] ~ normal(0, 1);
-    // }
 
-    // linear model
-    {
-        for(iClear in 1:clearN){
-            clear_duration[iClear] ~ gamma(exp(a[1, random_clear[iClear]]),
-                                           exp(a[2, random_clear[iClear]]));
-    }
-  }
+    // predicting clear durations
+    clear_duration ~ gamma(exp(lm_param[1]), exp(lm_param[2]))
 }
 // generated quantities{
 //   vector[clearN] log_lik;
