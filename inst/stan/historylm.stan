@@ -1,15 +1,30 @@
 functions {
    vector expand_history_param_to_individuals(int option, real fixed_value, vector mu, vector sigma, vector rnd, int randomN, int link_function){
-       // Uses option and parameters to compute value for each individual
+        // Uses option and parameters to compute value for each individual.
+        //
+        // Parameters:
+        // -----------
+        // int option : 1 (constant), 2 (single value), 3 (random independent), 4 (random pooled)
+        // real fixed_value : value for option == 1 (oConstant)
+        // vector mu : population mean, applicable for option == 2 or option == 4
+        // vector sigma : population variance, applicable for option == 4
+        // vector rnd : either individual means (option == 3) or individual z-scores (option == 4)
+        // int randomN : number of random clusters
+        // int link_function : 1 (log), 2 (logit)
+        //
+        // Returns:
+        // -----------
+        // vector[randomN] : value for each individual.
+
        vector[randomN] ind;
-       if (option == 1) { // oConstant
+       if (option == 1) { // constant
            ind = rep_vector(fixed_value, randomN);
            return ind;
        }
-       else if (option == 2) { // oSingle
+       else if (option == 2) { // single
            ind = rep_vector(mu[1], randomN);
        }
-       else if (option == 3) { // oIndependent
+       else if (option == 3) { // random independent
            ind = rnd;
        }
        else {
@@ -18,7 +33,7 @@ functions {
        }
 
        // using link function
-       if (link_function == 1) { //lfExp
+       if (link_function == 1) { //log
            return exp(ind);
        }
        else {
@@ -29,12 +44,10 @@ functions {
 data{
     // --- Family choice ---
     int<lower=1, upper=6> family; 
-    // 1 - Normal with linear model for the mean
-    // 2 - Gamma with linear model for shape and rate
-    // 3 - Gamma with linear model for the mean
-    // 4 - Gamma with linear model for shape only
-    // 5 - Gamma with linear model for rate only
-    // 6 - Log normal with linear model for the mean
+    // 1 - Gamma, linear model for both shape and rate
+    // 2 - Log normal with linear model for the mean
+    // 3 - Exponentially modulated normal with linear model for the mean and rate
+    // 4 - Normal with linear model for the mean
 
     // --- Complete time-series ---
     int<lower=1> rowsN;   // Number of rows in the COMPLETE multi-timeseries table including mixed phase.
@@ -43,7 +56,6 @@ data{
     int is_used[rowsN];   // Whether history value must used to predict duration or ignored (mixed phases, warm-up period, last, etc.)
     int run_start[rowsN]; // 1 marks a beginning of the new time-series (run/block/etc.)
     real session_tmean[rowsN];    // Mean dominance phase duration for both CLEAR percepts. Used to scale time-constant.
-
 
     // --- A shorter clear-states only time-series ---
     int clearN;                  // Number of rows in the clear-states only time-series
@@ -57,30 +69,40 @@ data{
     // --- Cumulative history parameters
     real<lower=0, upper=1> history_starting_values[2]; // Starting values for cumulative history at the beginning of the run
 
+    // time constant
     int<lower=1, upper=4> tau_option;  // 1 - constant provided by user, 2 - fit single tau for all, 3 - independent taus, 4 - pooled (multilevel) taus
     real<lower=0> fixed_tau;           // a fixed option (tau_option == 1)
     int tau_mu_size;                   // dimensionality, 1 - sampled, 0 - unused
     int tau_sigma_size;                // dimensionality, 1 - sampled, 0 - unused 
     int tau_rnd_size;                  // dimensionality, randomN - sampled, 0 - unused
+    real tau_prior[2];                 // prior
 
-    // mixed state
+    // Mixed state
     int<lower=1, upper=4> mixed_state_option; // 1 - constant provided by user, 2 - fit single tau for all, 3 - independent taus, 4 - pooled (multilevel) taus
     real<lower=0, upper=1> fixed_mixed_state; // a fixed option (tau_option == 1)
     int mixed_state_mu_size;                  // dimensionality, 1 - sampled, 0 - unused
     int mixed_state_sigma_size;               // dimensionality, 1 - sampled, 0 - unused
     int mixed_state_rnd_size;                 // dimensionality, randomN - sampled, 0 - unused
+    real mixed_state_prior[2];                // prior
 
-    // history-mixing proportion, used as history_mix * history_same - (1-history_mix) * history_different
+    // History-mixing proportion, used as history_mix * history_same - (1-history_mix) * history_different
     int<lower=1, upper=4> history_mix_option; // 1 - constant provided by user, 2 - fit single tau for all, 3 - independent taus, 4 - pooled (multilevel) taus
     real<lower=0, upper=1> fixed_history_mix; // fixed proportion of history mixing (tau_option == 1)
     int history_mix_mu_size;                  // dimensionality, 1 - sampled, 0 - unused
     int history_mix_sigma_size;               // dimensionality, 1 - sampled, 0 - unused
     int history_mix_rnd_size;                 // dimensionality, randomN - sampled, 0 - unused
+    real history_mix_prior[2];                // prior
+
+    // --- Linear model ---
+    int<lower=1> lmN; // number of linear models, i.e., distribution parameters that are modelled
+    int<lower=0, upper=1> varianceN; // number of variance parameters. Effectively, whether variance is sampled at all(1) or not (0)
+
+    real a_prior[lmN, 2];
 
     // --- Fixed effects
-    int<lower=1, upper=2> fixed_option; // 1 - fit single population-level value, 2 - pooled (multilevel) effects
-    int fixedN;                         // number of fixed effect terms
-    matrix[clearN, fixedN] fixed;       // values supplied
+    // int<lower=1, upper=2> fixed_option; // 1 - fit single population-level value, 2 - pooled (multilevel) effects
+    // int fixedN;                         // number of fixed effect terms
+    // matrix[clearN, fixedN] fixed;       // values supplied
 }
 transformed data {
     // Constants for likelihood index
@@ -104,44 +126,6 @@ transformed data {
     // Link function codes
     int lfLog = 1;
     int lfLogit = 2;
-
-    // --- Family-specific number of parameters ---
-    int paramsN = 2; // number of likelihood parameters to be fitted
-    { // dimensions for gamma distribution parameters
-        if (family == lGammaBoth) {
-            paramsN = 2;
-        }
-        else  {
-            paramsN = 1;
-        }
-    }
-
-    // --- Dimensions for the intercept term ---
-    int a_size;
-    int a_sigma_size;
-    int a_rnd_size;
-    if (randomN == 1) {
-        // single random factor -> single slope
-        a_size = paramsN;
-        a_sigma_size = 0;
-        a_rnd_size = 0;
-    }
-    else if (fixed_option == fSingle) {
-        // independent intercepts, rm ANOVA style
-        a_size = 0;
-        a_sigma_size = 0;
-        a_rnd_size = paramsN;
-    }
-    else if (fixed_option == fPooled) {
-        // pooled intercepts
-        a_size = paramsN;
-        a_sigma_size = paramsN;
-        a_rnd_size = paramsN;
-    }
-
-    // --- Priors ---
-    row_vector[2] priorGammaBothShape = [log(3), 5];
-    row_vector[2] priorGammaBothScale = [log(3), 5];
 }
 parameters {
     // --- History ---
@@ -155,15 +139,14 @@ parameters {
     vector[mixed_state_sigma_size] mixed_state_sigma; // population-level variance
     vector[mixed_state_rnd_size] mixed_state_rnd;     // individuals
 
-    // history mixture
+    // History mixture
     vector[history_mix_mu_size] history_mix_mu; // population-level mean
     vector[history_mix_sigma_size] history_mix_sigma; // population-level variance
     vector[history_mix_rnd_size] history_mix_rnd; // individuals
 
-    // intercept parameter for the linear model
-    vector[a_size] a;                       // population-level mean
-    vector<lower=0>[a_sigma_size] a_sigma;  // population-level variance (only if there is more than one individual)
-    vector[randomN] a_rnd[a_rnd_size];      // individuals
+    // --- Linear model ---
+    // Independent intercept for each random cluster
+    vector[randomN] a[lmN];
 
     // history terms for linear model
     // vector[history_term_size] bHistory; // population-level mean
@@ -178,69 +161,49 @@ transformed parameters {
    }
 }
 model {
-    // tau
-    if (tau_option == oSingle) {
-        tau_mu ~ normal(log(1), 0.75);
+    {// tau
+        if (tau_option == oSingle) {
+            tau_mu ~ normal(tau_prior[1], tau_prior[2]);
+        }
+        else if (tau_option == oIndependent) {
+            tau_rnd ~ normal(tau_prior[1], tau_prior[2]);
+        }
+        else if (tau_option == oPooled) {
+            tau_mu ~ normal(tau_prior[1], tau_prior[2]);
+            tau_sigma ~ exponential(1);
+            tau_rnd ~ normal(0, 1);
+        }
     }
-    else if (tau_option == oIndependent) {
-        tau_rnd ~ normal(log(1), 0.75);
+    { // Mixed state
+        if (mixed_state_option == oSingle) {
+            mixed_state_mu ~ normal(mixed_state_prior[1], mixed_state_prior[2]);
+        }
+        else if (mixed_state_option == oIndependent) {
+            mixed_state_rnd ~ normal(mixed_state_prior[1], mixed_state_prior[2]);
+        }
+        else if (mixed_state_option == oPooled) {
+            mixed_state_mu ~ normal(mixed_state_prior[1], mixed_state_prior[2]);
+            mixed_state_sigma ~ exponential(1);
+            mixed_state_rnd ~ normal(0, 1);
+        }
     }
-    else if (tau_option == oPooled) {
-        tau_mu ~ normal(log(1), 0.75);
-        tau_sigma ~ exponential(1);
-        tau_rnd ~ normal(0, 1);
-    }
-
-    // Mixed state
-    if (mixed_state_option == oSingle) {
-        mixed_state_mu ~ normal(0, 1);
-    }
-    else if (mixed_state_option == oIndependent) {
-        mixed_state_rnd ~ normal(0, 1);
-    }
-    else if (mixed_state_option == oPooled) {
-        mixed_state_mu ~ normal(0, 1);
-        mixed_state_sigma ~ exponential(1);
-        mixed_state_rnd ~ normal(0, 1);
-    }
-
-    // History mixture
-    if (history_mix_option == oSingle) {
-        history_mix_mu ~ normal(0, 1);
-    }
-    else if (history_mix_option == oIndependent) {
-        history_mix_rnd ~ normal(0, 1);
-    }
-    else if (history_mix_option == oPooled) {
-        history_mix_mu ~ normal(0, 1);
-        history_mix_sigma ~ exponential(1);
-        history_mix_rnd ~ normal(0, 1);
+    { // History mixture
+        if (history_mix_option == oSingle) {
+            history_mix_mu ~ normal(history_mix_prior[1], history_mix_prior[2]);
+        }
+        else if (history_mix_option == oIndependent) {
+            history_mix_rnd ~ normal(history_mix_prior[1], history_mix_prior[2]);
+        }
+        else if (history_mix_option == oPooled) {
+            history_mix_mu ~ normal(history_mix_prior[1], history_mix_prior[2]);
+            history_mix_sigma ~ exponential(1);
+            history_mix_rnd ~ normal(0, 1);
+        }
     }
 
     // intercepts
-    if (a_size > 0) { // we need to sample global intercept 
-        if (family == lGammaBoth){
-            a[1] ~ normal(priorGammaBothShape[1], priorGammaBothShape[2]);
-            a[2] ~ normal(priorGammaBothScale[1], priorGammaBothScale[2]);
-        }
-    }
-    if (a_sigma_size > 0) { // we need to sample variance of intercepts
-        a_sigma ~ exponential(1);
-    }
-    if (a_rnd_size > 0) {
-        if (fixed_option == fSingle){
-            // independent intercepts
-            if (family == lGammaBoth){
-                a_rnd[1] ~ normal(priorGammaBothShape[1], priorGammaBothShape[2]);
-                a_rnd[2] ~ normal(priorGammaBothScale[1], priorGammaBothScale[2]);
-            }
-        }
-        else {
-            // pooled intercepts : z-scores
-            for(i in 1:paramsN) a_rnd[i] ~ normal(0, 1);
-        }
-    }
-    
+    for(iLM in 1:lmN) a[iLM] ~ normal(a_prior[iLM, 1], a_prior[iLM, 2]);
+
     // if (randomN > 1) {
     //     bHistory_sigma ~ exponential(1);
     //     for(i in 1:history_term_size) bHistory_rnd[i] ~ normal(0, 1);
@@ -255,28 +218,9 @@ model {
 
     // linear model
     {
-        // individual intercepts
-        real a_ind[paramsN, randomN];
-        for(iP in 1:paramsN){
-            for(iR in 1:randomN){
-                if (randomN == 1){
-                    // single intercept
-                    a_ind[iP, iR] = a[iP];
-                }
-                else if (fixed_option == fSingle){
-                    // independent intercepts
-                    a_ind[iP, iR] = a_rnd[iP][iR];
-                }
-                else {
-                    // pooled intercepts
-                    a_ind[iP, iR] = a[iP] + a_sigma[iP] * a_rnd[iP][iR];
-                }
-            }
-        }
-
         for(iClear in 1:clearN){
-            clear_duration[iClear] ~ gamma(exp(a_ind[1, random_clear[iClear]]),
-                                           1 / exp(a_ind[2, random_clear[iClear]]));
+            clear_duration[iClear] ~ gamma(exp(a[1, random_clear[iClear]]),
+                                           exp(a[2, random_clear[iClear]]));
     }
   }
 }
