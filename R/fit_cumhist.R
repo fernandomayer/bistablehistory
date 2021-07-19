@@ -90,7 +90,7 @@ fit_cumhist <- function(data,
                         history_mix=0.5,
                         history_init=0,
                         family="gamma",
-                        chains=4,
+                        chains=1,
                         cores=NULL,
                         ...){
 
@@ -242,9 +242,14 @@ fit_cumhist <- function(data,
   if (sum(cumhist$data$duration < 0) > 0) stop("Table contains negative durations.")
   if (sum(cumhist$data$duration[cumhist$data$is_used] == 0) > 0) stop("Table contains zero durations for clear states. Check original duration column for 0 and NAs or, perhaps, you forgot to specify participant/session/run variable(s)?")
 
+  ## --- 9. Clean data ---
+  cumhist$data$clear_duration <- cumhist$data$duration[cumhist$data$is_used]
+  cumhist$data$random_clear <-cumhist$data$random[cumhist$data$is_used]
 
-  ## --- 9. Store number of random clusters ---
+  ## --- 9. Counts ---
+  cumhist$data$rowsN <- length(cumhist$data$duration)
   cumhist$data$randomN <- length(unique(cumhist$data$random))
+  cumhist$data$clearN <- length(cumhist$data$clear_duration)
 
   ## --- 10. History parameters ---
   cumhist$data <- c(cumhist$data,
@@ -260,21 +265,35 @@ fit_cumhist <- function(data,
   # --- 11. Check history_init
   cumhist$data$history_starting_values <- bistablehistory::evaluate_history_init(history_init)
 
-  ## --- 12. Check selected distribution
+  ## --- 12. Family
   supported_families <- c("gamma"=1, "lognormal"=2, "exgauss"=3, "normal"=4)
   if (!family %in% names(supported_families)) stop(sprintf("Unsupported distribution family '%s'", family))
+  lmN <- c("gamma"=2, "lognormal"=1, "exgauss"=2, "normal"=1)
+  varianceN <- c("gamma"=0, "lognormal"=1, "exgauss"=1, "normal"=1)
+  a_prior <- list("gamma" = matrix(c(log(3), 5, log(3), 5), nrow=2, byrow = TRUE),
+                  "lognormal" = matrix(c(log(3), 5), nrow=1, byrow = TRUE),
+                  "normal" = matrix(c(3, 5), nrow=1, byrow = TRUE))
 
+  cumhist$data$family <- supported_families[family]
+  cumhist$data$lmN <- lmN[family]
+  cumhist$data$varianceN <- varianceN[family]
+  cumhist$data$a_prior <- a_prior[[family]]
 
 
   # ----------------------------- Sampling -----------------------------
   # deciding on number of cores
-  # if (is.null(cores)) cores = future::availableCores()
-  #
-  #   cumhist$fit <- rstan::sampling(stanmodels[[stanmodel_name]],
-  #                                data=cumhist$data,
-  #                                chains=chains,
-  #                                cores=cores,
-  #                                ...)
+  if (is.null(cores)) cores = future::availableCores()
+
+  if (chains > 0) {
+    cumhist$fit <- rstan::sampling(stanmodels$historylm,
+                                  data=cumhist$data,
+                                  chains=chains,
+                                  cores=cores,
+                                  ...)
+  }
+  else {
+    message("Zero chain specified, skipping sampling.")
+  }
 
   cumhist
 }
