@@ -10,7 +10,7 @@ functions {
         // vector sigma : population variance, applicable for option == 4
         // vector rnd : either individual means (option == 3) or individual z-scores (option == 4)
         // int randomN : number of random clusters
-        // int link_function : 1 (log), 2 (logit)
+        // int link_function : 1 (identityt), 2 (log), 3 (logit)
         //
         // Returns:
         // -----------
@@ -33,12 +33,14 @@ functions {
        }
 
        // using link function
-       if (link_function == 1) { //log
+       if (link_function == 2) { //log
            return exp(ind);
        }
-       else {
+       else if (link_function == 3) { // logit
            return inv_logit(ind);
        }
+
+       return(ind);
    }
 
     /**
@@ -149,6 +151,7 @@ data{
     int<lower=1> lmN; // number of linear models, i.e., distribution parameters that are modelled
     int<lower=0, upper=1> varianceN; // number of variance parameters. Effectively, whether variance is sampled at all(1) or not (0)
 
+    // intercept: independent for each parameter and random cluster
     real a_prior[lmN, 2];
 
     // --- Fixed effects
@@ -176,8 +179,9 @@ transformed data {
     int fPooled = 2;
 
     // Link function codes
-    int lfLog = 1;
-    int lfLogit = 2;
+    int lfIdentity = 1;
+    int lfLog = 2;
+    int lfLogit = 3;
 }
 parameters {
     // --- History ---
@@ -200,19 +204,19 @@ parameters {
     // Independent intercept for each random cluster
     vector[randomN] a[lmN];
 
+    // history term, always multilevel but this makes sense only for randomN > 1
+    real bH_mu[lmN];
+    real bH_sigma[randomN > 1 ? lmN : 0];
+    vector[randomN > 1 ? randomN : 0] bH_rnd[randomN > 1 ? lmN : 0];
+
     // history terms for linear model
     // vector[history_term_size] bHistory; // population-level mean
     // vector<lower=0>[(randomN > 1) && (fixed_option == fPooled) ? paramsN : 0] bHistory_sigma; // population-level variance (only if there is more than one individual)
     // vector[randomN] bHistory_rnd[(randomN > 1) && (fixed_option == fPooled) ? paramsN : 0]; // individuals
 }
 transformed parameters {
-    vector[clearN] lm_param[paramsN];
+    vector[clearN] lm_param[lmN];
     {   
-        // Cumulative history parameters
-        vector[randomN] tau_ind = expand_history_param_to_individuals(tau_option, fixed_tau, tau_mu, tau_sigma, tau_rnd, randomN, lfLog);
-        vector[randomN] mixed_state_ind = expand_history_param_to_individuals(mixed_state_option, fixed_mixed_state, mixed_state_mu, mixed_state_sigma, mixed_state_rnd, randomN, lfLogit);
-        vector[randomN] history_mix_ind = expand_history_param_to_individuals(history_mix_option, fixed_history_mix, history_mix_mu, history_mix_sigma, history_mix_rnd, randomN, lfLogit);
-
         // Service variables for computing cumulative history
         matrix[2, 3] level;
         real current_history[2];
@@ -221,6 +225,20 @@ transformed parameters {
 
         // Index of clear percepts
         int iC = 1;
+
+        // Cumulative history parameters
+        vector[randomN] tau_ind = expand_history_param_to_individuals(tau_option, fixed_tau, tau_mu, tau_sigma, tau_rnd, randomN, lfLog);
+        vector[randomN] mixed_state_ind = expand_history_param_to_individuals(mixed_state_option, fixed_mixed_state, mixed_state_mu, mixed_state_sigma, mixed_state_rnd, randomN, lfLogit);
+        vector[randomN] history_mix_ind = expand_history_param_to_individuals(history_mix_option, fixed_history_mix, history_mix_mu, history_mix_sigma, history_mix_rnd, randomN, lfLogit);
+        vector[randomN] bH_ind[lmN];
+        for(iP in 1:lmN) {
+            if (randomN == 1) {
+                bH_ind[iP] = rep_vector(bH_mu[iP], randomN);
+            }
+            else {
+                bH_ind[iP] = bH_mu[iP] + bH_sigma[iP] * bH_rnd[iP];
+            }
+        }
 
         for(iT in 1:rowsN){
             // new time-series, recompute absolute tau and reset history state
@@ -236,9 +254,9 @@ transformed parameters {
                 hmix = history_mix_ind[random[iT]] * current_history[state[iT]] +
                       (1 - history_mix_ind[random[iT]]) * current_history[3-state[iT]];
 
-                // computing lm parameters
-                for(iP in 1:paramsN) {
-                     lm_param[iP][iC] = a[iP][random[iT]] + bHistory_ind[iP][random[iT]] * hmix;
+                // computing lm for parameters
+                for(iP in 1:lmN) {
+                     lm_param[iP][iC] = a[iP][random[iT]] + bH_ind[iP][random[iT]] * hmix;
                 }
 
                 iC += 1;
@@ -292,12 +310,22 @@ model {
         }
     }
 
-    // sampling intercepts
-    for(iLM in 1:lmN) a[iLM] ~ normal(a_prior[iLM, 1], a_prior[iLM, 2]);
 
+    // linear model parameters
+    for(iLM in 1:lmN) {
+        // intercepts
+        a[iLM] ~ normal(a_prior[iLM, 1], a_prior[iLM, 2]);
+
+        // effect of history
+        bH_mu[iLM] ~ normal(0, 1);
+        if (randomN > 1) {
+            bH_sigma[iLM] ~ exponential(1);
+            bH_rnd[iLM] ~ normal(0, 1);
+        }
+    }
 
     // predicting clear durations
-    clear_duration ~ gamma(exp(lm_param[1]), exp(lm_param[2]))
+    clear_duration ~ gamma(exp(lm_param[1]), exp(lm_param[2]));
 }
 // generated quantities{
 //   vector[clearN] log_lik;
