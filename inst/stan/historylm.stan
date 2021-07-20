@@ -319,7 +319,7 @@ model {
         // effect of history
         bH_mu[iLM] ~ normal(0, 1);
         if (randomN > 1) {
-            bH_sigma[iLM] ~ exponential(10);
+            bH_sigma[iLM] ~ exponential(1);
             bH_rnd[iLM] ~ normal(0, 1);
         }
     }
