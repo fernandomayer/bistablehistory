@@ -5,10 +5,10 @@
 \title{Computes widely applicable information criterion
 (WAIC).}
 \usage{
-\method{waic}{cumhist}(cumhist_fit)
+\method{waic}{cumhist}(x, ...)
 }
 \arguments{
-\item{cumhist_fit}{A fitted cumhist object}
+\item{x}{A \link[=cumhist-class]{cumhist} object.}
 }
 \value{
 A named list, see \code{\link[loo:waic]{loo::waic()}} for details.

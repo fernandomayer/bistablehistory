@@ -16,7 +16,7 @@ fit_cumhist(
   fixed_effects = NULL,
   tau = NULL,
   mixed_state = 0.5,
-  history_mix = 0.5,
+  history_mix = 0.2,
   history_init = 0,
   family = "gamma",
   chains = 1,
