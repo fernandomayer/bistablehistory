@@ -87,7 +87,7 @@ fit_cumhist <- function(data,
                         fixed_effects=NULL,
                         tau=NULL,
                         mixed_state=0.5,
-                        history_mix=0.5,
+                        history_mix=0.2,
                         history_init=0,
                         family="gamma",
                         chains=1,
@@ -116,7 +116,7 @@ fit_cumhist <- function(data,
     data[[state]] <- as.factor(data[[state]])
   }
   cumhist <- list()
-  attr(cumhist, "class") <- "cumhist"
+  class(cumhist) <- "cumhist"
 
   cumhist$data <- tibble::tibble(state = as.integer(data[[state]]))
 
@@ -274,6 +274,7 @@ fit_cumhist <- function(data,
                   "lognormal" = matrix(c(log(3), 5), nrow=1, byrow = TRUE),
                   "normal" = matrix(c(3, 5), nrow=1, byrow = TRUE))
 
+  cumhist$family <- family
   cumhist$data$family <- supported_families[family]
   cumhist$data$lmN <- lmN[family]
   cumhist$data$varianceN <- varianceN[family]
