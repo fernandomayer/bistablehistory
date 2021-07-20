@@ -65,35 +65,6 @@ functions {
 
         return signal_level;
     }
-
-    /**
-    * Computes next state of history assuming negative exponential growth/decay
-    *   with scale time constant (tau) from current level (history) to the
-    *   signal level (signal) following the next perceptual state duration
-    *   (duration).
-    * @param history Current value of history. Real, range [0..1].
-    * @param signal Signal level to which history grows/decays. Real,
-    *   range [0..1].
-    * @param duration Duration of the signal. Real, >0.
-    * @param tau Time constant (scale) of the negative exponential. Real, >0.
-    * @return Real value for history state after the signal.
-    */
-    real compute_history(real history, real signal, real duration, real tau){
-        if (history == signal){
-        // special case, history is already at the final reachable level
-        return history;
-        }
-        else if (history > signal) {
-        // decreasing history to the signal level
-            real  starting_x = -tau * log((history - signal) / (1-signal));
-            return (1 - signal) * exp(-(duration + starting_x) / tau) + signal;
-        }
-        else {
-        // increasing history to the signal level
-        real starting_x = -tau * log((signal - history)/signal);
-        return signal * (1- exp(-(duration + starting_x) / tau));
-        }
-    }
 }
 data{
     // --- Family choice ---
@@ -161,12 +132,10 @@ data{
 }
 transformed data {
     // Constants for likelihood index
-    int lNormal = 1;
-    int lGammaBoth = 2;
-    int lGammaMean = 3;
-    int lGammaShape = 4;
-    int lGammaRate = 5;
-    int lLogNormal = 6;
+    int lGamma = 1;
+    int lLogNormal = 2;
+    int lExGaussian = 3;
+    int lNormal = 4;
 
     // Constants for sampling options for cumulative history parameters
     int oConstant = 1;
@@ -264,7 +233,8 @@ transformed parameters {
 
             // computing history for the NEXT episode
             for(iState in 1:2){
-                current_history[iState] = compute_history(current_history[iState], level[iState, state[iT]], duration[iT], tau);
+                // current_history[iState] = compute_history(current_history[iState], level[iState, state[iT]], duration[iT], tau);
+                current_history[iState] = level[iState, state[iT]] + (current_history[iState] - level[iState, state[iT]]) * exp(-duration[iT] / tau);
             }
         }
     }
@@ -310,7 +280,6 @@ model {
         }
     }
 
-
     // linear model parameters
     for(iLM in 1:lmN) {
         // intercepts
@@ -325,20 +294,14 @@ model {
     }
 
     // predicting clear durations
-    clear_duration ~ gamma(exp(lm_param[1]), exp(lm_param[2]));
+    if (family == lGamma) {
+        clear_duration ~ gamma(exp(lm_param[1]), exp(lm_param[2]));
+    }
 }
-// generated quantities{
-//   vector[clearN] log_lik;
-//   vector[clearN] predicted_duration;
+generated quantities{
+    vector[clearN] log_lik;
 
-//   // assuming gamma
-//   real shape;
-//   real scale;
-
-//   for(iClear in 1:clearN){
-//     shape = exp(a[1]);
-//     scale = exp(a[2]);
-//     predicted_duration[iClear] = shape * scale;
-//     log_lik[iClear] = gamma_lpdf(clear_duration[iClear] | shape, 1 / scale);
-//   }
-// }
+    if (family == lGamma) {
+        for(iC in 1:clearN) log_lik[iC] = gamma_lpdf(clear_duration[iC] | exp(lm_param[1][iC]), exp(lm_param[2][iC]));
+    }
+}
