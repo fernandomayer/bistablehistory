@@ -279,7 +279,7 @@ model {
         }
         else if (tau_option == oPooled) {
             tau_mu ~ normal(tau_prior[1], tau_prior[2]);
-            tau_sigma ~ exponential(1);
+            tau_sigma ~ exponential(10);
             tau_rnd ~ normal(0, 1);
         }
     }
@@ -292,7 +292,7 @@ model {
         }
         else if (mixed_state_option == oPooled) {
             mixed_state_mu ~ normal(mixed_state_prior[1], mixed_state_prior[2]);
-            mixed_state_sigma ~ exponential(1);
+            mixed_state_sigma ~ exponential(10);
             mixed_state_rnd ~ normal(0, 1);
         }
     }
@@ -305,7 +305,7 @@ model {
         }
         else if (history_mix_option == oPooled) {
             history_mix_mu ~ normal(history_mix_prior[1], history_mix_prior[2]);
-            history_mix_sigma ~ exponential(1);
+            history_mix_sigma ~ exponential(10);
             history_mix_rnd ~ normal(0, 1);
         }
     }
@@ -319,7 +319,7 @@ model {
         // effect of history
         bH_mu[iLM] ~ normal(0, 1);
         if (randomN > 1) {
-            bH_sigma[iLM] ~ exponential(1);
+            bH_sigma[iLM] ~ exponential(10);
             bH_rnd[iLM] ~ normal(0, 1);
         }
     }
