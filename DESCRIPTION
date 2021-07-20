@@ -20,7 +20,8 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 Biarch: true
 Depends: 
-    R (>= 3.4.0)
+    R (>= 3.4.0),
+    loo
 Imports: 
     methods,
     Rcpp (>= 0.12.0),
