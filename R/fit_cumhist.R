@@ -4,7 +4,7 @@
 #' Computes cumulative history for bistable perceptual
 #' rivalry displays.
 #'
-#' @param data A table with all time-series.
+#' @param data A table with time-series.
 #' @param state String, the name of the column that specifies
 #' perceptual state. The column type should be a factor with
 #' two or three levels (the third level is assumed to correspond to a
@@ -95,92 +95,9 @@ fit_cumhist <- function(data,
                         ...){
 
   # ----------------------------- Input checks -----------------------------
-
-  ## --- 1. Check if data is a data.frame (or something that is convertible to it, e.g. a tibble) ---
-  if (!is.data.frame(data)) stop("data parameter is not a data.frame")
-
-  ## --- 2. Check the state column. ---
-  # Must be
-  # * a factor with two or three levels, or
-  # * column with no more than two unique values
-  if (!state %in% colnames(data)) stop(sprintf("Column '%s' for state variable is not in the table", state))
-  if (sum(is.na(data[[state]]))>0) stop("State column contains NAs")
-  if (is.factor(data[[state]])){
-    if (length(levels(data[[state]])) < 2) stop("Too few levels for state column, should be either 2 or 3")
-    if (length(levels(data[[state]])) > 3) stop("Too many levels for state column, should be either 2 or 3")
-  }
-  else {
-    if (length(unique(data[[state]])) != 2) stop(sprintf("If state column is not a factor, it must have just two unique values, not %s", length(unique(data[[state]]))))
-
-    # converting state column to a factor
-    data[[state]] <- as.factor(data[[state]])
-  }
-  cumhist <- list()
+  cumhist <- list(data = as.list(bistablehistory::preprocess_data(data, state, duration, onset, random_effect, session, run)))
   class(cumhist) <- "cumhist"
 
-  cumhist$data <- tibble::tibble(state = as.integer(data[[state]]))
-
-
-  ## --- 3. Check that either duration or onset a supplied ---
-  if (is.null(duration) && is.null(onset)) stop("Either duration or onset time must be specified")
-  if (is.null(duration)) { # we must infer duration of individual phases from onsets
-    # check that column with this name exists
-    if (!onset %in% colnames(data)) stop(sprintf("Column '%s' for onset variable is not in the table", onset))
-
-    # NAs (can't handle those for the onset)
-    if (sum(is.na(data[[onset]]))>0) stop("Onset column contains NAs")
-
-    # check that is has a numeric type
-    if (!is.numeric(data[[onset]])) stop("Onset column must be numeric")
-
-    # computing duration, the values at the end of the runs will be trivially wrong
-    # (negative) but this will be corrected once we have full participant/session/run data
-    cumhist$data$duration <- c(diff(data[[onset]]), NA)
-  }
-  else { # duration can be used directly
-    # check that column with this name exists
-    if (!duration %in% colnames(data)) stop(sprintf("Column '%s' for duration variable is not in the table", duration))
-
-    # check that is has a numeric type
-    if (!is.numeric(data[[duration]])) stop("Duration column must be numeric")
-    cumhist$data$duration <- data[[duration]]
-  }
-
-  ## --- 4. Check whether we have information about random_effect ---
-  if (is.null(random_effect)) {
-    # A single experimental session
-    cumhist$data$random <- as.integer(1)
-  }
-  else {
-    # check that column with this name exists
-    if (!random_effect %in% colnames(data)) stop(sprintf("Column '%s' for random effect variable is not in the table", random_effect))
-    if (sum(is.na(data[[random_effect]]))>0) stop("Random effect column contains NAs")
-    cumhist$data$random <- as.integer(as.factor(data[[random_effect]]))
-  }
-
-  ## --- 5. Check whether we have information about experimental sessions ---
-  if (is.null(session)) {
-    # A single experimental session
-    cumhist$data$session <- as.integer(1)
-  }
-  else {
-    # check that column with this name exists
-    if (!session %in% colnames(data)) stop(sprintf("Column '%s' for session variable is not in the table", session))
-    if (sum(is.na(data[[session]]))>0) stop("Session column contains NAs")
-    cumhist$data$session <- as.integer(as.factor(data[[session]]))
-  }
-
-  ## --- 6. Check whether we have information about individual runs ---
-  if (is.null(run)) {
-    # A single run
-    cumhist$data$run <- as.integer(1)
-  }
-  else {
-    # check that column with this name exists
-    if (!run %in% colnames(data)) stop(sprintf("Column '%s' for run variable is not in the table", run))
-    if (sum(is.na(data[[run]]))>0) stop("Run column contains NAs")
-    cumhist$data$run <- as.integer(as.factor(data[[run]]))
-  }
 
   ## --- 12. Check fixed effects
   if (is.null(fixed_effects)) {
@@ -197,61 +114,16 @@ fit_cumhist <- function(data,
     fit_fixed <- "fixed"
   }
 
-  ## --- 7. Time series preprocessing (session_tmean, which durations are used for fitting, service flags)
-  cumhist$data <-
-    cumhist$data %>%
-
-    # making sure last duration is 0 (as we won't be using it for fitting  anyhow)
-    dplyr::group_by(random, session, run) %>%
-    dplyr::mutate(duration = ifelse(dplyr::row_number()==dplyr::n(), 0, duration)) %>%
-
-    # computing average clear percept duration for each experimental session
-    dplyr::group_by(random, session) %>%
-    dplyr::mutate(session_tmean = mean(duration[state<3], na.rm=TRUE)) %>%
-
-    # marking out percept that will be used to fit history
-    # To this end, we are ignoring
-    # * any transition/mixed states (state==3)
-    dplyr::ungroup() %>%
-    dplyr::mutate(is_used = state != 3) %>%
-
-    # * first durations for each state (as they had no chance to be properly history dependent)
-    dplyr::group_by(random, session, run, state) %>%
-    dplyr::mutate(is_used = ifelse(dplyr::row_number()==1, FALSE, is_used)) %>%
-
-    # * last duration in each block (as it is not used for predictions)
-    dplyr::group_by(random, session, run) %>%
-    dplyr::mutate(is_used = ifelse(dplyr::row_number()==dplyr::n(), FALSE, is_used)) %>%
-
-    # replacing any NAs with zeros
-    dplyr::mutate(duration = tidyr::replace_na(duration, 0)) %>%
-
-    # add time series start flag (first element for each run)
-    dplyr::group_by(random, session, run) %>%
-    dplyr::mutate(run_start  = ifelse(dplyr::row_number()==1, 1, 0))   %>%
-
-    # turn data into the list
-    dplyr::ungroup() %>%
-    as.list()
-
-
-  ## --- 8. Second durations check ---
-  # Check that after all cleaning up used durations are strictly non-negative positive and
-  # that durations used for history fitting are strictly positive (only the is_used once, so, ignoring
-  # transitions and last durations)
-  if (sum(cumhist$data$duration < 0) > 0) stop("Table contains negative durations.")
-  if (sum(cumhist$data$duration[cumhist$data$is_used] == 0) > 0) stop("Table contains zero durations for clear states. Check original duration column for 0 and NAs or, perhaps, you forgot to specify participant/session/run variable(s)?")
-
-  ## --- 9. Clean data ---
+  ## --- 1. Prepare clean data ---
   cumhist$data$clear_duration <- cumhist$data$duration[cumhist$data$is_used]
-  cumhist$data$random_clear <-cumhist$data$random[cumhist$data$is_used]
+  cumhist$data$irandom_clear <-cumhist$data$irandom[cumhist$data$is_used]
 
-  ## --- 9. Counts ---
+  ## --- 2. Counts ---
   cumhist$data$rowsN <- length(cumhist$data$duration)
   cumhist$data$randomN <- length(unique(cumhist$data$random))
   cumhist$data$clearN <- length(cumhist$data$clear_duration)
 
-  ## --- 10. History parameters ---
+  ## --- 3. History parameters ---
   cumhist$data <- c(cumhist$data,
                     bistablehistory::evaluate_history_option("tau", tau, cumhist$data$randomN, Inf),
                     bistablehistory::evaluate_history_option("mixed_state", mixed_state, cumhist$data$randomN, 1),
@@ -260,9 +132,7 @@ fit_cumhist <- function(data,
                          "mixed_state_prior"=c(0, 1),
                          "history_mix_prior"=c(0, 1)))
 
-
-
-  # --- 11. Check history_init
+  # --- 4. Check history_init
   cumhist$data$history_starting_values <- bistablehistory::evaluate_history_init(history_init)
 
   ## --- 12. Family
@@ -286,11 +156,11 @@ fit_cumhist <- function(data,
   if (is.null(cores)) cores = future::availableCores()
 
   if (chains > 0) {
-    cumhist$fit <- rstan::sampling(stanmodels$historylm,
-                                  data=cumhist$data,
-                                  chains=chains,
-                                  cores=cores,
-                                  ...)
+    cumhist$stanfit <- rstan::sampling(stanmodels$historylm,
+                                      data=cumhist$data,
+                                      chains=chains,
+                                      cores=cores,
+                                      ...)
   }
   else {
     message("Zero chain specified, skipping sampling.")
