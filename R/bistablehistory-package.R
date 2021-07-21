@@ -11,7 +11,7 @@
 #' @importFrom rstan sampling
 #' @importFrom loo loo waic
 #' @importFrom tibble tibble as_tibble
-#' @importFrom dplyr bind_cols
+#' @importFrom dplyr bind_cols row_number n mutate group_by ungroup
 #' @importFrom future availableCores
 #'
 #' @references
