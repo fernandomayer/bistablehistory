@@ -178,6 +178,9 @@ parameters {
     real bH_sigma[randomN > 1 ? lmN : 0];
     vector[randomN > 1 ? randomN : 0] bH_rnd[randomN > 1 ? lmN : 0];
 
+    // variance
+    vector[varianceN] sigma;
+
     // history terms for linear model
     // vector[history_term_size] bHistory; // population-level mean
     // vector<lower=0>[(randomN > 1) && (fixed_option == fPooled) ? paramsN : 0] bHistory_sigma; // population-level variance (only if there is more than one individual)
@@ -293,9 +296,16 @@ model {
         }
     }
 
+    // variance
+    if (varianceN > 0) {
+        sigma ~ exponential(1);
+    }
+
     // predicting clear durations
     if (family == lGamma) {
         clear_duration ~ gamma(exp(lm_param[1]), exp(lm_param[2]));
+    } else if (family == lNormal) {
+        clear_duration ~ normal(lm_param[1], sigma[1]);
     }
 }
 generated quantities{
@@ -303,5 +313,8 @@ generated quantities{
 
     if (family == lGamma) {
         for(iC in 1:clearN) log_lik[iC] = gamma_lpdf(clear_duration[iC] | exp(lm_param[1][iC]), exp(lm_param[2][iC]));
+    }
+    else if (family == lNormal) {
+        for(iC in 1:clearN) log_lik[iC] = normal_lpdf(clear_duration[iC] | lm_param[1][iC], sigma[1]);
     }
 }
