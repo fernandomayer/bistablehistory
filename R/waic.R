@@ -18,6 +18,6 @@
 #' waic_lognormal <- waic(lognormal_fit)
 #' loo::loo_compare(waic_gamma, waic_lognormal)
 waic.cumhist <- function(x, ...) {
-  log_lik <- loo::extract_log_lik(x$fit, "log_lik", merge_chains = FALSE)
+  log_lik <- loo::extract_log_lik(x$stanfit, "log_lik", merge_chains = FALSE)
   loo::waic(log_lik)
 }

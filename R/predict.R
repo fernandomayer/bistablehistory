@@ -25,7 +25,7 @@
 #' }
 predict.cumhist <-  function(object, summary=TRUE, probs=NULL, ...) {
   # extracting parameters
-  lm_params <- rstan::extract(object$fit, pars="lm_param")$lm_param
+  lm_params <- rstan::extract(object$stanfit, pars="lm_param")$lm_param
 
   if (object$family == "gamma") {
     predictions <- exp(lm_params[, 1, ]) * exp(lm_params[, 2, ])
