@@ -87,9 +87,9 @@ data{
     real clear_duration[clearN]; // Durations of clear percepts only.
 
     // --- Random effects ---
-    int<lower=1> randomN;                          // Number of levels for random effects
-    int<lower=1, upper=randomN> random[rowsN];    // Index of a random effect cluster (participant, display, etc.)
-    int<lower=1, upper=randomN> random_clear[clearN];    // Index of a random effect cluster (participant, display, etc.)
+    int<lower=1> randomN;                               // Number of levels for random effects
+    int<lower=1, upper=randomN> irandom[rowsN];         // Index of a random effect cluster (participant, display, etc.)
+    int<lower=1, upper=randomN> irandom_clear[clearN];  // Index of a random effect cluster (participant, display, etc.)
 
     // --- Cumulative history parameters
     real<lower=0, upper=1> history_starting_values[2]; // Starting values for cumulative history at the beginning of the run
@@ -213,19 +213,19 @@ transformed parameters {
             // new time-series, recompute absolute tau and reset history state
             if (run_start[iT]){
                 current_history = history_starting_values;
-                tau = session_tmean[iT] * tau_ind[random[iT]];
-                level = state_to_signal_levels(mixed_state_ind[random[iT]]);
+                tau = session_tmean[iT] * tau_ind[irandom[iT]];
+                level = state_to_signal_levels(mixed_state_ind[irandom[iT]]);
             }
 
             // for valid percepts, we use history for parameter computation
             if (is_used[iT] == 1){
                 // history mixture
-                hmix = history_mix_ind[random[iT]] * current_history[state[iT]] +
-                      (1 - history_mix_ind[random[iT]]) * current_history[3-state[iT]];
+                hmix = history_mix_ind[irandom[iT]] * current_history[state[iT]] +
+                      (1 - history_mix_ind[irandom[iT]]) * current_history[3-state[iT]];
 
                 // computing lm for parameters
                 for(iP in 1:lmN) {
-                     lm_param[iP][iC] = a[iP][random[iT]] + bH_ind[iP][random[iT]] * hmix;
+                     lm_param[iP][iC] = a[iP][irandom[iT]] + bH_ind[iP][irandom[iT]] * hmix;
                 }
 
                 iC += 1;
