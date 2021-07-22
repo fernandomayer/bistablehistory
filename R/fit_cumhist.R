@@ -99,21 +99,6 @@ fit_cumhist <- function(data,
   class(cumhist) <- "cumhist"
 
 
-  ## --- 12. Check fixed effects
-  if (is.null(fixed_effects)) {
-    fit_fixed <- NULL
-  }
-  else {
-    # Checking that all columns are valid
-    for(current_fixed in fixed_effects){
-      if (!current_fixed %in% colnames(data)) stop(sprintf("Column '%s' for fixed effect variable is not in the table", current_fixed))
-      if (sum(is.na(data[[current_fixed]]))>0) stop(sprintf("Column '%s' contains NAs", current_fixed))
-      if (!is.numeric(data[[current_fixed]])) stop(sprintf("Column '%s' is not numeric", current_fixed))
-    }
-
-    fit_fixed <- "fixed"
-  }
-
   ## --- 1. Prepare clean data ---
   cumhist$data$clear_duration <- cumhist$data$duration[cumhist$data$is_used]
   cumhist$data$irandom_clear <-cumhist$data$irandom[cumhist$data$is_used]
@@ -123,7 +108,24 @@ fit_cumhist <- function(data,
   cumhist$data$randomN <- length(unique(cumhist$data$random))
   cumhist$data$clearN <- length(cumhist$data$clear_duration)
 
-  ## --- 3. History parameters ---
+  ## --- 3. Check fixed effects
+  if (is.null(fixed_effects)) {
+    cumhist$data$fixedN <- 0
+    cumhist$data$fixed_clear <- matrix(0, nrow=cumhist$data$clearN, ncol=1)
+  }
+  else {
+    # Checking that all columns are valid
+    for(current_fixed in fixed_effects){
+      if (!current_fixed %in% colnames(data)) stop(sprintf("Column '%s' for fixed effect variable is not in the table", current_fixed))
+      if (sum(is.na(data[[current_fixed]]))>0) stop(sprintf("Column '%s' contains NAs", current_fixed))
+      if (!is.numeric(data[[current_fixed]])) stop(sprintf("Column '%s' is not numeric", current_fixed))
+    }
+
+    cumhist$data$fixedN <- length(fixed_effects)
+    cumhist$data$fixed_clear <- as.matrix(data[cumhist$data$is_used, fixed_effects])
+  }
+
+  ## --- 4. History parameters ---
   cumhist$data <- c(cumhist$data,
                     bistablehistory::evaluate_history_option("tau", tau, cumhist$data$randomN, Inf),
                     bistablehistory::evaluate_history_option("mixed_state", mixed_state, cumhist$data$randomN, 1),
@@ -132,10 +134,10 @@ fit_cumhist <- function(data,
                          "mixed_state_prior"=c(0, 1),
                          "history_mix_prior"=c(0, 1)))
 
-  # --- 4. Check history_init
+  # --- 5. Check history_init
   cumhist$data$history_starting_values <- bistablehistory::evaluate_history_init(history_init)
 
-  ## --- 12. Family
+  ## --- 6. Family
   supported_families <- c("gamma"=1, "lognormal"=2, "exgauss"=3, "normal"=4)
   if (!family %in% names(supported_families)) stop(sprintf("Unsupported distribution family '%s'", family))
   lmN <- c("gamma"=2, "lognormal"=1, "exgauss"=2, "normal"=1)
@@ -149,7 +151,6 @@ fit_cumhist <- function(data,
   cumhist$data$lmN <- lmN[family]
   cumhist$data$varianceN <- varianceN[family]
   cumhist$data$a_prior <- a_prior[[family]]
-
 
   # ----------------------------- Sampling -----------------------------
   # deciding on number of cores
@@ -168,5 +169,3 @@ fit_cumhist <- function(data,
 
   cumhist
 }
-
-
