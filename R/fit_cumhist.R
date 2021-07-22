@@ -97,7 +97,17 @@ fit_cumhist <- function(data,
   # ----------------------------- Input checks -----------------------------
   cumhist <- list(data = as.list(bistablehistory::preprocess_data(data, state, duration, onset, random_effect, session, run)))
   class(cumhist) <- "cumhist"
-
+  cumhist$state <- state
+  cumhist$duration <- duration
+  cumhist$onset <- onset
+  cumhist$random_effect <- random_effect
+  cumhist$session <- session
+  cumhist$run <- run
+  cumhist$fixed_effects <- fixed_effects
+  cumhist$tau <- tau
+  cumhist$mixed_state <- mixed_state
+  cumhist$history_mix <- history_mix
+  cumhist$history_init <- history_init
 
   ## --- 1. Prepare clean data ---
   cumhist$data$clear_duration <- cumhist$data$duration[cumhist$data$is_used]
