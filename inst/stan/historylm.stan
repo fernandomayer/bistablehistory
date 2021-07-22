@@ -91,6 +91,10 @@ data{
     int<lower=1, upper=randomN> irandom[rowsN];         // Index of a random effect cluster (participant, display, etc.)
     int<lower=1, upper=randomN> irandom_clear[clearN];  // Index of a random effect cluster (participant, display, etc.)
 
+    // --- Fixed effects ---
+    int<lower=0> fixedN;
+    matrix[clearN, fixedN > 0 ? fixedN : 1] fixed_clear;
+
     // --- Cumulative history parameters
     real<lower=0, upper=1> history_starting_values[2]; // Starting values for cumulative history at the beginning of the run
 
@@ -124,11 +128,6 @@ data{
 
     // intercept: independent for each parameter and random cluster
     real a_prior[lmN, 2];
-
-    // --- Fixed effects
-    // int<lower=1, upper=2> fixed_option; // 1 - fit single population-level value, 2 - pooled (multilevel) effects
-    // int fixedN;                         // number of fixed effect terms
-    // matrix[clearN, fixedN] fixed;       // values supplied
 }
 transformed data {
     // Constants for likelihood index
@@ -156,17 +155,17 @@ parameters {
     // --- History ---
     // tau
     vector[tau_mu_size] tau_mu;       // population-level mean
-    vector[tau_sigma_size] tau_sigma; // population-level variance
+    vector<lower=0>[tau_sigma_size] tau_sigma; // population-level variance
     vector[tau_rnd_size] tau_rnd;     // individuals
 
     // mixed state
     vector[mixed_state_mu_size] mixed_state_mu;       // population-level mean
-    vector[mixed_state_sigma_size] mixed_state_sigma; // population-level variance
+    vector<lower=0>[mixed_state_sigma_size] mixed_state_sigma; // population-level variance
     vector[mixed_state_rnd_size] mixed_state_rnd;     // individuals
 
     // History mixture
     vector[history_mix_mu_size] history_mix_mu; // population-level mean
-    vector[history_mix_sigma_size] history_mix_sigma; // population-level variance
+    vector<lower=0>[history_mix_sigma_size] history_mix_sigma; // population-level variance
     vector[history_mix_rnd_size] history_mix_rnd; // individuals
 
     // --- Linear model ---
@@ -175,16 +174,14 @@ parameters {
 
     // history term, always multilevel but this makes sense only for randomN > 1
     real bH_mu[lmN];
-    real bH_sigma[randomN > 1 ? lmN : 0];
+    real<lower=0> bH_sigma[randomN > 1 ? lmN : 0];
     vector[randomN > 1 ? randomN : 0] bH_rnd[randomN > 1 ? lmN : 0];
 
-    // variance
-    vector[varianceN] sigma;
+    // fixed-effects
+    row_vector[fixedN] bF[fixedN > 0 ? lmN : 0];
 
-    // history terms for linear model
-    // vector[history_term_size] bHistory; // population-level mean
-    // vector<lower=0>[(randomN > 1) && (fixed_option == fPooled) ? paramsN : 0] bHistory_sigma; // population-level variance (only if there is more than one individual)
-    // vector[randomN] bHistory_rnd[(randomN > 1) && (fixed_option == fPooled) ? paramsN : 0]; // individuals
+    // variance
+    vector<lower=0>[varianceN] sigma;
 }
 transformed parameters {
     vector[clearN] lm_param[lmN];
@@ -227,8 +224,11 @@ transformed parameters {
                       (1 - history_mix_ind[irandom[iT]]) * current_history[3-state[iT]];
 
                 // computing lm for parameters
-                for(iP in 1:lmN) {
-                     lm_param[iP][iC] = a[iP][irandom[iT]] + bH_ind[iP][irandom[iT]] * hmix;
+                for(iLM in 1:lmN) {
+                    lm_param[iLM][iC] = a[iLM][irandom[iT]] + bH_ind[iLM][irandom[iT]] * hmix;
+                    if (fixedN > 0) {
+                        lm_param[iLM][iC] += sum(bF[iLM] .* fixed_clear[iC]);
+                    }
                 }
 
                 iC += 1;
@@ -236,7 +236,6 @@ transformed parameters {
 
             // computing history for the NEXT episode
             for(iState in 1:2){
-                // current_history[iState] = compute_history(current_history[iState], level[iState, state[iT]], duration[iT], tau);
                 current_history[iState] = level[iState, state[iT]] + (current_history[iState] - level[iState, state[iT]]) * exp(-duration[iT] / tau);
             }
         }
@@ -294,6 +293,8 @@ model {
             bH_sigma[iLM] ~ exponential(1);
             bH_rnd[iLM] ~ normal(0, 1);
         }
+
+        if (fixedN > 0) bF[iLM] ~ normal(0, 1);
     }
 
     // variance
