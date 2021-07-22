@@ -1,8 +1,10 @@
 #' Computes R-squared using Bayesian R-squared approach.
+#'
 #' For detail refer to:
 #' Andrew Gelman, Ben Goodrich, Jonah Gabry, and Aki Vehtari (2018).
 #' R-squared for Bayesian regression models. The American Statistician,
-#' doi:10.1080/00031305.2018.1549100.
+#' doi:[10.1080/00031305.2018.1549100](https://doi.org/10.1080/00031305.2018.1549100) and
+#' [https://avehtari.github.io/bayes_R2/bayes_R2.html](https://avehtari.github.io/bayes_R2/bayes_R2.html)
 #'
 #' @name R2
 #'
@@ -34,9 +36,7 @@ R2.cumhist <- function(object, summary=TRUE, probs=c(0.055, 0.945), ...){
   r2s <- var_pred / (var_pred + var_e)
 
   # returning
-  if (!summary) {
-    r2s
-  }
+  if (!summary) return(r2s)
 
   r2_mean <- apply(as.matrix(r2s), MARGIN=2, FUN=mean)
   if (is.null(probs)) return(r2_mean)

@@ -3,11 +3,7 @@
 \name{R2}
 \alias{R2}
 \alias{R2.cumhist}
-\title{Computes R-squared using Bayesian R-squared approach.
-For detail refer to:
-Andrew Gelman, Ben Goodrich, Jonah Gabry, and Aki Vehtari (2018).
-R-squared for Bayesian regression models. The American Statistician,
-doi:10.1080/00031305.2018.1549100.}
+\title{Computes R-squared using Bayesian R-squared approach.}
 \usage{
 \method{R2}{cumhist}(object, summary = TRUE, probs = c(0.055, 0.945), ...)
 }
@@ -25,11 +21,11 @@ raw sample values. Defaults to \code{TRUE}}
 vector of values or a data.frame with summary
 }
 \description{
-Computes R-squared using Bayesian R-squared approach.
 For detail refer to:
 Andrew Gelman, Ben Goodrich, Jonah Gabry, and Aki Vehtari (2018).
 R-squared for Bayesian regression models. The American Statistician,
-doi:10.1080/00031305.2018.1549100.
+doi:\href{https://doi.org/10.1080/00031305.2018.1549100}{10.1080/00031305.2018.1549100} and
+\url{https://avehtari.github.io/bayes_R2/bayes_R2.html}
 }
 \examples{
 #' \donttest{
