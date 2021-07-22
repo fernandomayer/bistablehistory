@@ -25,7 +25,7 @@ fit_cumhist(
 )
 }
 \arguments{
-\item{data}{A table with all time-series.}
+\item{data}{A table with time-series.}
 
 \item{state}{String, the name of the column that specifies
 perceptual state. The column type should be a factor with
