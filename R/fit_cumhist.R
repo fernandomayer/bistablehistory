@@ -1,8 +1,8 @@
-# Main package interface function that computes
-# cumulative history for bistable perceptual rivalry displays.
-
-#' Computes cumulative history for bistable perceptual
-#' rivalry displays.
+#' Fits cumulative history for bistable perceptual rivalry displays.
+#'
+#' Fits a generalized linear model using cumulative history and
+#' specified fixed effects.
+#'
 #'
 #' @param data A table with time-series.
 #' @param state String, the name of the column that specifies
