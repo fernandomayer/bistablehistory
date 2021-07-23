@@ -79,7 +79,8 @@ preprocess_data <- function(data,
       data[[state]] <- as.factor(data[[state]])
     }
 
-    df <- tibble::tibble(state = as.integer(data[[state]]))
+    df <- tibble::tibble(state = as.integer(data[[state]]),
+                         original_state = data[[state]])
 
     ## --- 3. Check that either duration or onset a supplied ---
     if (is.null(duration) && is.null(onset)) stop("Either duration or onset time must be specified")
