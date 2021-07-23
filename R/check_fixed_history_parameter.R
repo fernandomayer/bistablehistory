@@ -20,8 +20,9 @@ check_fixed_history_parameter <- function(param_name, param_value, randomN, uppe
   if (length(param_value) != 1 && length(param_value) != randomN) {
     stop(sprintf("Number ofvalues for %s must be either 1 or %d (number of random clusters)", param_name, randomN))
   }
-  if (param_value < 0) stop(sprintf("%s must be non-negative", param_name))
-  if (param_value > upperLimit) stop(sprintf("%s must be less or equal to %g", param_name, upperLimit))
+  if (any(param_value < 0)) stop(sprintf("%s must be non-negative", param_name))
+  if (any(param_value > upperLimit)) stop(sprintf("%s must be less or equal to %g", param_name, upperLimit))
 
-  rep(param_value, randomN)
+  if (length(param_value) != randomN) param_value <- rep(param_value, randomN)
+  param_value
 }
