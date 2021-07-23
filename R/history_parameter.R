@@ -8,9 +8,8 @@
 #' @param probs The percentiles used to compute summary, defaults to 89% credible interval.
 #' @param ...
 #'
-#' @return A single value, if fixed value was used. A vector or a tibble, depending on the
-#' option used (single intercept, independent or random intercepts), and whether summary was
-#' requested.
+#' @return A vector, if summary was not requested. Or a tibble with a summary or if a fixed value was used.
+#'
 #' @export
 #'
 #' @examples
@@ -27,7 +26,9 @@ history_parameter.cumhist <- function(object, param, summary=TRUE, probs=c(0.055
   if (!param %in% c("tau", "mixed_state", "history_mix")) stop("Unknown history parameter")
 
   # trivial case of user-supplied single constant value
-  if (object$data[[paste0(param, '_option')]] == 1) return(object$data[[paste0('fixed_', param)]])
+  if (object$data[[paste0(param, '_option')]] == 1) {
+    return(tibble(Estimate = object$data[[paste0('fixed_', param)]]))
+  }
 
   # single fitted value
   if (object$data[[paste0(param, '_option')]] == 2){
@@ -38,11 +39,10 @@ history_parameter.cumhist <- function(object, param, summary=TRUE, probs=c(0.055
     if (!summary) return(param_mu)
 
     # just the mean
-    if (is.null(probs)) return(mean(param_mu))
+    if (is.null(probs)) return(tibble(Estimate = mean(param_mu)))
 
     # average and quantiles
-    avg <- tibble::tibble(avg = mean(param_mu))
-    colnames(avg) <- param
+    avg <- tibble::tibble(Estimate = mean(param_mu))
     return(bind_cols(avg, as_tibble(t(quantile(param_mu, probs = c(0.055, 0.945))))))
     return(avg)
   }
@@ -57,10 +57,7 @@ history_parameter.cumhist <- function(object, param, summary=TRUE, probs=c(0.055
                          Estimate = c(param_rnd))
 
     # raw samples
-    if (!summary){
-      colnames(df) <- c(object$random_effect, param)
-      return(df)
-    }
+    if (!summary) return(df)
   }
 
   # pooled random
@@ -87,25 +84,25 @@ history_parameter.cumhist <- function(object, param, summary=TRUE, probs=c(0.055
   # averages only
   avg <-
     df %>%
-    group_by(Random) %>%
-    summarise(Estimate = mean(Estimate), .groups="keep") %>%
-    ungroup()
+    dplyr::group_by(Random) %>%
+    dplyr::summarise(Estimate = mean(Estimate), .groups="keep") %>%
+    dplyr::ungroup()
 
   # quantiles, if requested
   if (!is.null(probs)){
     quantiles <-
       df %>%
-      group_by(Random) %>%
+      dplyr::group_by(Random) %>%
       tidyr::nest() %>%
       dplyr::mutate(CI = purrr::map(data, ~tibble::as_tibble(t(apply(as.matrix(.$Estimate), MARGIN=2, FUN=quantile, probs=probs))))) %>%
-      select(-data) %>%
+      dplyr::select(-data) %>%
       tidyr::unnest(cols=CI)
 
     avg <-dplyr::left_join(avg, quantiles, by="Random")
   }
 
   # returning summary for random independent and pooled
-  colnames(avg)[1:2] <- c(object$random_effect, param)
+  colnames(avg)[1] <- object$random_effect
   return(avg)
 }
 
