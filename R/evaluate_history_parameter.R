@@ -35,8 +35,8 @@ evaluate_history_option <- function(param_name, param_value, randomN, upperLimit
     param_list[[paste0(param_name, "_rnd_size")]] <- 0L
   }
   else if (is.numeric(param_value) && is.atomic(param_value) && length(param_value) == 1) {
-    if (param_value < 0) stop(sprintf("%s must be non-negative", param_name))
-    if (param_value > upperLimit) stop(sprintf("%s must be less or equal to %g", param_name, upperLimit))
+    if (any(param_value < 0)) stop(sprintf("%s must be non-negative", param_name))
+    if (any(param_value > upperLimit)) stop(sprintf("%s must be less or equal to %g", param_name, upperLimit))
 
 
     # constant
