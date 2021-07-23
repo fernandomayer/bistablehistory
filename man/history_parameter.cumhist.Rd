@@ -20,9 +20,7 @@ raw sample values. Defaults to \code{TRUE}}
 \item{...}{}
 }
 \value{
-A single value, if fixed value was used. A vector or a tibble, depending on the
-option used (single intercept, independent or random intercepts), and whether summary was
-requested.
+A vector, if summary was not requested. Or a tibble with a summary or if a fixed value was used.
 }
 \description{
 Extract values of used or fitted history parameter
