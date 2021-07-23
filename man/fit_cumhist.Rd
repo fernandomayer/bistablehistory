@@ -2,8 +2,7 @@
 % Please edit documentation in R/fit_cumhist.R
 \name{fit_cumhist}
 \alias{fit_cumhist}
-\title{Computes cumulative history for bistable perceptual
-rivalry displays.}
+\title{Fits cumulative history for bistable perceptual rivalry displays.}
 \usage{
 fit_cumhist(
   data,
@@ -111,8 +110,8 @@ phases. Options include \code{"gamma"} (default), \code{"lognormal"}, \code{"exg
 
 }
 \description{
-Computes cumulative history for bistable perceptual
-rivalry displays.
+Fits a generalized linear model using cumulative history and
+specified fixed effects.
 }
 \examples{
 data(br_singleblock)
