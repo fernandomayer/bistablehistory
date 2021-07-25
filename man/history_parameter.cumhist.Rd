@@ -4,7 +4,14 @@
 \alias{history_parameter.cumhist}
 \title{Extract values of used or fitted history parameter}
 \usage{
-\method{history_parameter}{cumhist}(object, param, summary = TRUE, probs = c(0.055, 0.945), ...)
+\method{history_parameter}{cumhist}(
+  object,
+  param,
+  summary = TRUE,
+  probs = c(0.055, 0.945),
+  includePopulationLevel = TRUE,
+  ...
+)
 }
 \arguments{
 \item{object}{An object of class \link[=cumhist-class]{cumhist}}
@@ -16,6 +23,9 @@ or \code{"history_mix"}.}
 raw sample values. Defaults to \code{TRUE}}
 
 \item{probs}{The percentiles used to compute summary, defaults to 89\% credible interval.}
+
+\item{includePopulationLevel}{Logical, for pooled random effect only. Whether to include
+population mean as a separate \code{"_population} level, default to \code{TRUE}.}
 
 \item{...}{}
 }

@@ -27,3 +27,7 @@ Computes cumulative history based on common \code{history} values and
 \code{normalized_tau} and \code{mixed_state} that are defined for each
 random cluster / individual.
 }
+\examples{
+df <- preprocess_data(br_singleblock, state="State", duration="Duration")
+fast_history_compute(df, 1, 0.5, c(0, 0))
+}
