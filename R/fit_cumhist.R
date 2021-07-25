@@ -108,6 +108,7 @@ fit_cumhist <- function(data,
   cumhist$mixed_state <- mixed_state
   cumhist$history_mix <- history_mix
   cumhist$history_init <- history_init
+  cumhist$Call <- match.call()
 
   ## --- 1. Prepare clean data ---
   cumhist$data$clear_duration <- cumhist$data$duration[cumhist$data$is_used]
