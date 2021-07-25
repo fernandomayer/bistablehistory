@@ -30,7 +30,11 @@ Imports:
     rstantools (>= 2.1.1),
     dplyr,
     tibble,
-    magrittr
+    magrittr,
+    glue,
+    bayesboot,
+    boot,
+    future
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp (>= 0.12.0),
