@@ -25,7 +25,7 @@ raw sample values. Defaults to \code{TRUE}}
 \item{probs}{The percentiles used to compute summary, defaults to 89\% credible interval.}
 
 \item{includePopulationLevel}{Logical, for pooled random effect only. Whether to include
-population mean as a separate \code{"_population} level, default to \code{TRUE}.}
+population mean as a separate \code{"_population"} level, default to \code{TRUE}.}
 
 \item{...}{}
 }
@@ -36,7 +36,7 @@ A vector, if summary was not requested. Or a tibble with a summary or if a fixed
 Extract values of used or fitted history parameter
 }
 \examples{
-#' \donttest{
+\donttest{
 br_fit <- fit_cumhist(br_singleblock, state="State", duration="Duration")
 history_parameter(br_fit, "tau")
 }

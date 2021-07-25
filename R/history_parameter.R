@@ -7,7 +7,7 @@
 #' raw sample values. Defaults to \code{TRUE}
 #' @param probs The percentiles used to compute summary, defaults to 89% credible interval.
 #' @param includePopulationLevel Logical, for pooled random effect only. Whether to include
-#' population mean as a separate \code{"_population} level, default to \code{TRUE}.
+#' population mean as a separate \code{"_population"} level, default to \code{TRUE}.
 #' @param ...
 #'
 #' @return A vector, if summary was not requested. Or a tibble with a summary or if a fixed value was used.
@@ -15,7 +15,7 @@
 #' @export
 #'
 #' @examples
-#' #' \donttest{
+#' \donttest{
 #' br_fit <- fit_cumhist(br_singleblock, state="State", duration="Duration")
 #' history_parameter(br_fit, "tau")
 #' }
