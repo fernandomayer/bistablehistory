@@ -77,7 +77,7 @@ data{
     // --- Complete time-series ---
     int<lower=1> rowsN;   // Number of rows in the COMPLETE multi-timeseries table including mixed phase.
     real duration[rowsN]; // Duration of a dominance/transition phase
-    int state[rowsN];     // Index of a dominance state, 1 and 2 code for two competing clear states, 3 - transition/mixed.
+    int istate[rowsN];     // Index of a dominance istate, 1 and 2 code for two competing clear states, 3 - transition/mixed.
     int is_used[rowsN];   // Whether history value must used to predict duration or ignored (mixed phases, warm-up period, last, etc.)
     int run_start[rowsN]; // 1 marks a beginning of the new time-series (run/block/etc.)
     real session_tmean[rowsN];    // Mean dominance phase duration for both CLEAR percepts. Used to scale time-constant.
@@ -220,8 +220,8 @@ transformed parameters {
             // for valid percepts, we use history for parameter computation
             if (is_used[iT] == 1){
                 // history mixture
-                hmix = history_mix_ind[irandom[iT]] * current_history[state[iT]] +
-                      (1 - history_mix_ind[irandom[iT]]) * current_history[3-state[iT]];
+                hmix = history_mix_ind[irandom[iT]] * current_history[istate[iT]] +
+                      (1 - history_mix_ind[irandom[iT]]) * current_history[3-istate[iT]];
 
                 // computing lm for parameters
                 for(iLM in 1:lmN) {
@@ -236,7 +236,7 @@ transformed parameters {
 
             // computing history for the NEXT episode
             for(iState in 1:2){
-                current_history[iState] = level[iState, state[iT]] + (current_history[iState] - level[iState, state[iT]]) * exp(-duration[iT] / tau);
+                current_history[iState] = level[iState, istate[iT]] + (current_history[iState] - level[iState, istate[iT]]) * exp(-duration[iT] / tau);
             }
         }
     }
