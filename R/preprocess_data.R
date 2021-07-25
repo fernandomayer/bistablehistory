@@ -79,8 +79,8 @@ preprocess_data <- function(data,
       data[[state]] <- as.factor(data[[state]])
     }
 
-    df <- tibble::tibble(state = as.integer(data[[state]]),
-                         original_state = data[[state]])
+    df <- tibble::tibble(istate = as.integer(data[[state]]),
+                         state = data[[state]])
 
     ## --- 3. Check that either duration or onset a supplied ---
     if (is.null(duration) && is.null(onset)) stop("Either duration or onset time must be specified")
@@ -154,16 +154,16 @@ preprocess_data <- function(data,
 
       # computing average clear percept duration for each experimental session
       dplyr::group_by(random, session) %>%
-      dplyr::mutate(session_tmean = mean(duration[state<3], na.rm=TRUE)) %>%
+      dplyr::mutate(session_tmean = mean(duration[istate<3], na.rm=TRUE)) %>%
 
       # marking out percept that will be used to fit history
       # To this end, we are ignoring
-      # * any transition/mixed states (state==3)
+      # * any transition/mixed states (istate==3)
       dplyr::ungroup() %>%
-      dplyr::mutate(is_used = state != 3) %>%
+      dplyr::mutate(is_used = istate != 3) %>%
 
       # * first durations for each state (as they had no chance to be properly history dependent)
-      dplyr::group_by(random, session, run, state) %>%
+      dplyr::group_by(random, session, run, istate) %>%
       dplyr::mutate(is_used = ifelse(dplyr::row_number()==1, FALSE, is_used)) %>%
 
       # * last duration in each block (as it is not used for predictions)
