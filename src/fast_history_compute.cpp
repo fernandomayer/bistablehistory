@@ -30,7 +30,7 @@ NumericMatrix state_to_signal_levels(double mixed_level){
 //'   Thus, its length must be equal to the number of unique indexes in \code{df["irandom"]}.
 //' @param history_init DoubleVector, size 2. Initial values of history for a run.
 //' @return NumericMatrix, size \code{df.nrows()} × 2. Computed history values for each state.
-//' @example
+//' @examples
 //' df <- preprocess_data(br_singleblock, state="State", duration="Duration")
 //' fast_history_compute(df, 1, 0.5, c(0, 0))
 // [[Rcpp::export]]
@@ -39,7 +39,7 @@ NumericMatrix fast_history_compute(DataFrame df, DoubleVector normalized_tau, Do
   NumericMatrix history(df.nrows(), 2);
 
   // table columns
-  IntegerVector state = df["state"];
+  IntegerVector state = df["istate"];
   DoubleVector duration = df["duration"];
   IntegerVector irandom = df["irandom"];
   IntegerVector run_start = df["run_start"];
