@@ -16,7 +16,7 @@
 #'   Thus, its length must be equal to the number of unique indexes in \code{df["irandom"]}.
 #' @param history_init DoubleVector, size 2. Initial values of history for a run.
 #' @return NumericMatrix, size \code{df.nrows()} × 2. Computed history values for each state.
-#' @example
+#' @examples
 #' df <- preprocess_data(br_singleblock, state="State", duration="Duration")
 #' fast_history_compute(df, 1, 0.5, c(0, 0))
 fast_history_compute <- function(df, normalized_tau, mixed_state, history_init) {
