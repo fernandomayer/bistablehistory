@@ -24,7 +24,9 @@
 #' predictions_samples <- predict(br_fit, summary=FALSE)
 #' }
 predict.cumhist <-  function(object, summary=TRUE, probs=NULL, ...) {
-  # extracting parameters
+  if (is.null(object$stanfit)) stop("The object has no fitted stan model")
+
+    # extracting parameters
   lm_params <- rstan::extract(object$stanfit, pars="lm_param")$lm_param
 
   if (object$family == "gamma") {

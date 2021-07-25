@@ -17,6 +17,8 @@
 #' fixef(br_fit)
 #' }
 fixef.cumhist <- function(object, summary=TRUE, probs=c(0.055, 0.945), ...){
+  if (is.null(object$stanfit)) stop("The object has no fitted stan model")
+
   if (object$data$fixedN == 0) {
     message("No fixed effects were specified for the model.")
     return()
@@ -33,37 +35,37 @@ fixef.cumhist <- function(object, summary=TRUE, probs=c(0.055, 0.945), ...){
   terms <-
     # laying out ordered distribution / fixed term parameter grid
     expand.grid(DistributionParameter=1:dim(bF)[2], Term=1:dim(bF)[3]) %>%
-    group_by(DistributionParameter, Term) %>%
-    summarise(DistributionParameter = rep(DistributionParameter, dim(bF)[1]),
+    dplyr::group_by(DistributionParameter, Term) %>%
+    dplyr::summarise(DistributionParameter = rep(DistributionParameter, dim(bF)[1]),
               Term = rep(Term, dim(bF)[1]),
               .groups="keep") %>%
-    ungroup() %>%
+    dplyr::ungroup() %>%
 
     # adding in the estimates
-    mutate(Estimate = c(bF)) %>%
+    dplyr::mutate(Estimate = c(bF)) %>%
 
     # adding fixed term names
-    mutate(Term = factor(Term, levels = 1:dim(bF)[3], labels = colnames(object$data$fixed_clear))) %>%
+    dplyr::mutate(Term = factor(Term, levels = 1:dim(bF)[3], labels = colnames(object$data$fixed_clear))) %>%
 
     # adding distribution parameter names
-    mutate(DistributionParameter = factor(DistributionParameter, levels=1:dim(bF)[2], labels=param_names[[object$family]]))
+    dplyr::mutate(DistributionParameter = factor(DistributionParameter, levels=1:dim(bF)[2], labels=param_names[[object$family]]))
 
   if (!summary) return(terms)
 
   # mean
   avg_terms <-
     terms %>%
-    group_by(DistributionParameter, Term) %>%
-    summarise(Estimate = mean(Estimate), .groups="drop")
+    dplyr::group_by(DistributionParameter, Term) %>%
+    dplyr::summarise(Estimate = mean(Estimate), .groups="drop")
 
   # quantiles
   if (!is.null(probs)){
     term_quantiles <-
       terms %>%
-      group_by(DistributionParameter, Term) %>%
+      dplyr::group_by(DistributionParameter, Term) %>%
       tidyr::nest() %>%
       dplyr::mutate(CI = purrr::map(data, ~tibble::as_tibble(t(apply(as.matrix(.$Estimate), MARGIN=2, FUN=quantile, probs=probs))))) %>%
-      select(-data) %>%
+      dplyr::select(-data) %>%
       tidyr::unnest(cols=CI)
 
     avg_terms <- dplyr::left_join(avg_terms, term_quantiles, by=c("DistributionParameter", "Term"))

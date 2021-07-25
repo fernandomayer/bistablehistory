@@ -88,8 +88,10 @@ compute_history <- function(data,
 #' @keywords internal
 extract_history.cumhist <- function(object, ...)
 {
+  if (is.null(object$stanfit)) stop("The object has no fitted stan model")
+
   # data as table
-  data <- tibble::tibble(state = object$data$state,
+  data <- tibble::tibble(istate = object$data$istate,
                          duration = object$data$duration,
                          irandom= object$data$irandom,
                          run_start = object$data$run_start,
@@ -97,10 +99,10 @@ extract_history.cumhist <- function(object, ...)
 
   # history parameters
   tau <-  bistablehistory::check_fixed_history_parameter("tau",
-                                                         history_tau(object, probs=NULL)$Estimate,
+                                                         history_tau(object, probs=NULL, includePopulationLevel=FALSE)$Estimate,
                                                          object$data$randomN, Inf)
   mixed_state <- bistablehistory::check_fixed_history_parameter("mixed_state",
-                                                         history_mixed_state(object, probs=NULL)$Estimate,
+                                                         history_mixed_state(object, probs=NULL, includePopulationLevel=FALSE)$Estimate,
                                                          object$data$randomN, Inf)
   history_init <- bistablehistory::evaluate_history_init(object$data$history_starting_values)
 
@@ -109,7 +111,7 @@ extract_history.cumhist <- function(object, ...)
 
 
   # adding state names
-  colnames(h) <- levels(factor(object$data$original_state))[1:2]
+  colnames(h) <- levels(factor(object$data$state))[1:2]
 
   h
 }

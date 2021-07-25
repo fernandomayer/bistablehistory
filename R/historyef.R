@@ -27,28 +27,28 @@ historyef.cumhist <- function(object, summary=TRUE, probs=c(0.055, 0.945), ...){
   bH <- rstan::extract(object$stanfit, pars="bH_mu")$bH_mu
 
   terms <-
-    tibble(Estimate = c(bH),
-           DistributionParameter = rep(1:ncol(bH), each=nrow(bH))) %>%
+    tibble::tibble(Estimate = c(bH),
+                   DistributionParameter = rep(1:ncol(bH), each=nrow(bH))) %>%
 
     # adding distribution parameter names
-    mutate(DistributionParameter = factor(DistributionParameter, levels=1:dim(bH)[2], labels=param_names[[object$family]]))
+    dplyr::mutate(DistributionParameter = factor(DistributionParameter, levels=1:dim(bH)[2], labels=param_names[[object$family]]))
 
   if (!summary) return(terms)
 
   # mean
   avg_terms <-
     terms %>%
-    group_by(DistributionParameter) %>%
-    summarise(Estimate = mean(Estimate), .groups="drop")
+    dplyr::group_by(DistributionParameter) %>%
+    dplyr::summarise(Estimate = mean(Estimate), .groups="drop")
 
   # quantiles
   if (!is.null(probs)){
     term_quantiles <-
       terms %>%
-      group_by(DistributionParameter) %>%
+      dplyr::group_by(DistributionParameter) %>%
       tidyr::nest() %>%
       dplyr::mutate(CI = purrr::map(data, ~tibble::as_tibble(t(apply(as.matrix(.$Estimate), MARGIN=2, FUN=quantile, probs=probs))))) %>%
-      select(-data) %>%
+      dplyr::select(-data) %>%
       tidyr::unnest(cols=CI)
 
     avg_terms <- dplyr::left_join(avg_terms, term_quantiles, by="DistributionParameter")

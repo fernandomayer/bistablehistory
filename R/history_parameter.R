@@ -6,6 +6,8 @@
 #' @param summary Whether summary statistics should be returned instead of
 #' raw sample values. Defaults to \code{TRUE}
 #' @param probs The percentiles used to compute summary, defaults to 89% credible interval.
+#' @param includePopulationLevel Logical, for pooled random effect only. Whether to include
+#' population mean as a separate \code{"_population} level, default to \code{TRUE}.
 #' @param ...
 #'
 #' @return A vector, if summary was not requested. Or a tibble with a summary or if a fixed value was used.
@@ -18,7 +20,9 @@
 #' history_parameter(br_fit, "tau")
 #' }
 
-history_parameter.cumhist <- function(object, param, summary=TRUE, probs=c(0.055, 0.945), ...){
+history_parameter.cumhist <- function(object, param, summary=TRUE, probs=c(0.055, 0.945), includePopulationLevel = TRUE, ...){
+  if (is.null(object$stanfit)) stop("The object has no fitted stan model")
+
   # link functions
   lf <- list("tau" = exp, "mixed_state"=boot::inv.logit, "history_mix"=boot::inv.logit)
 
@@ -70,9 +74,15 @@ history_parameter.cumhist <- function(object, param, summary=TRUE, probs=c(0.055
     # computing individual values
     param_random <- rep(param_mu, ncol(param_z)) + rep(param_sigma, ncol(param_z)) * c(param_z)
 
-    # putting data and random factor levels into a single table
-    df <- tibble::tibble(Random = rep(c("_population", levels(factor(object$data$random))), each=nrow(param_rnd)),
-                         Estimate = lf[[param]](c(c(param_mu), param_random)))
+    if (includePopulationLevel){
+      # putting data and random factor levels into a single table
+      df <- tibble::tibble(Random = rep(c("_population", levels(factor(object$data$random))), each=nrow(param_z)),
+                           Estimate = lf[[param]](c(c(param_mu), param_random)))
+    }
+    else {
+      df <- tibble::tibble(Random = rep(levels(factor(object$data$random)), each=nrow(param_z)),
+                           Estimate = lf[[param]](c(param_random)))
+    }
 
     # raw samples
     if (!summary){

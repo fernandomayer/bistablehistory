@@ -18,7 +18,9 @@
 #' coef(br_fit)
 #' }
 coef.cumhist <- function(object, summary=TRUE, probs=c(0.055, 0.945), ...){
-  coef <-
+  if (is.null(object$stanfit)) stop("The object has no fitted stan model")
+
+    coef <-
     bistablehistory::historyef.cumhist(object, summary, probs) %>%
     dplyr::mutate(Term = "History") %>%
     dplyr::relocate(Term, .after= DistributionParameter)
@@ -33,6 +35,3 @@ coef.cumhist <- function(object, summary=TRUE, probs=c(0.055, 0.945), ...){
   coef
 }
 
-#' @export
-#' @keywords internal
-coef <- function(object, ...) { UseMethod("coef") }
