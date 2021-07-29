@@ -1,0 +1,22 @@
+---
+title: "Dominance Phase Duration Distributions"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Dominance Phase Duration Distributions}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+```
+
+## Gamma distribution with linear model fr both _shape_ and _rate_ parameters.
+
+Option `"gamma both"`

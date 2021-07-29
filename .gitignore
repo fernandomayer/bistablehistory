@@ -1,1 +1,5 @@
 .Rproj.user
+inst/doc
+*.exe
+.Rhistory
+.Rbuildignore

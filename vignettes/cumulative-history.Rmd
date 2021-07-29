@@ -14,8 +14,8 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-knitr::opts_chunk$set(echo = FALSE)
+```{r setup, echo=FALSE, warning = FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message=FALSE)
 library(dplyr)
 library(ggplot2)
 ```
@@ -58,27 +58,11 @@ df <-
             t = t,
             x = S + (x0 - S) * exp(-t / tau),
             Parameters = sprintf("x(0) = %.1f, S = %.1f, tau = %d", x0[1], S[1], tau[1]),
-            .groups="drop")
+            .groups="keep")
 
 ggplot(df, aes(x=t, y=x, color=Parameters)) + 
   geom_line() + 
-  xlab("Δt [s]") +
-  ylab("x(t + Δt)") + 
+  xlab("dt [s]") +
+  ylab("x(t + dt)") + 
   ylim(0, 1)
-```
-
-
-```{r}
-x <- seq(-5, 5, length.out=100)
-y <- dnorm(x, 0, 1)
-plot(boot::inv.logit(x), y)
-
-```
-
-
-```{r}
-x <- seq(-5, 1.5, length.out=100)
-y <- dnorm(x, log(1), 0.75)
-plot(exp(x), y)
-
 ```
