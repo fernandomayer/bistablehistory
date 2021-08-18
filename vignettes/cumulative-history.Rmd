@@ -1,21 +1,23 @@
 ---
 title: "Cumulative History"
+author: "Alexander (Sasha) Pastukhov"
+date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{cumulative-historu}
+  %\VignetteIndexEntry{Cumulative History}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
   comment = "#>"
 )
-```
 
-```{r setup, echo=FALSE, warning = FALSE, message=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message=FALSE)
 library(dplyr)
 library(ggplot2)
 ```
