@@ -37,7 +37,6 @@ Imports:
     tibble,
     magrittr,
     glue,
-    bayesboot,
     boot,
     future,
     purrr,

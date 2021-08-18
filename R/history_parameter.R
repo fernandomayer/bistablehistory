@@ -11,12 +11,14 @@
 #'
 #' @return A vector, if summary was not requested. Or a tibble with a summary or if a fixed value was used.
 #'
+#' @importFrom boot inv.logit
 #' @importFrom dplyr %>% group_by summarise ungroup mutate select left_join
 #' @importFrom rlang .data
 #' @importFrom rstan extract
 #' @importFrom stats quantile
 #' @importFrom tibble tibble as_tibble
 #' @importFrom tidyr nest unnest
+#'
 #' @export
 #'
 #' @examples
