@@ -22,7 +22,23 @@ library(dplyr)
 library(ggplot2)
 ```
 
-The cumulative history for a perceptual state is computed via a homogeneous first order process:
+Certain stimuli, such as a Necker cube depicted below, are compatible with several, typically two, comparably likely perceptual interpretations. In case of the Necker cube, one can perceive as "upwards" or "downwards" and during continuous viewing the perception alternates between these alternatives (these alternations are schematically depicted on the right).
+
+```{r out.width="80%", fig.align='center'}
+knitr::include_graphics("nc-stimulus.png")
+```
+
+A distribution of these so-called dominance phases typically has a right-skewed distribution that is frequently fitted using Gamma distribution.
+
+```{r out.width="80%", fig.align='center'}
+knitr::include_graphics("gamma-distribution.png")
+```
+
+However, the individual dominance phases show a subtle but consistent serial dependence, see, for example, [van Ee (2009)](https://doi.org/10.1364/JOSAA.26.002612). This serial dependence is thought to reflect accumulation of slow adaptation [(Pastukhov et.al., 2013)](https://doi.org/10.3389/fncom.2013.00017) or prediction error [(Weilnhammer et al., 2017)[https://doi.org/10.1371/journal.pcbi.1005536] for the dominant percept. This slow accumulation process can be described via a homogeneous first order process. A brief summary on the formula and examples of accumulation over time for different initial values, signal strength, and time constants are presented below. For further details, please refer to [(Pastukhov & Braun, 2011)](https://doi.org/10.1167/11.10.12).
+
+---
+
+The cumulative history for a perceptual state computed via a homogeneous first order process:
 $$\frac{dx_i}{dt} = \frac{1}{\tau} (-x_i + S_i(t))$$
 
 where $\tau$ is the time constant, $x_i$ is cumulative history and $S_i(t)$ is current signal level for the state _i_, so that
@@ -45,11 +61,12 @@ $$
 
 In our case, we are interested in change of cumulative history during a particular dominance phase that start at time $t$ and end at time $t + \Delta t$. Solving for initial condition $x_i(t)$ and $S$:
 $$x_i(t + \Delta t) = x_i(t) + (S - x_i(t)) \cdot (1 - e^{-\Delta t/\tau})\\
-x_i(t + \Delta t) = S + (x_i(t) - S)  \cdot e^{-\Delta t/\tau}
-$$
+x_i(t + \Delta t) = S + (x_i(t) - S)  \cdot e^{-\Delta t/\tau}$$
 
 
-```{r}
+
+The figure below shows accumulation over time for three different initial values ($x(0)$), signal strength ($S$), and and time constants ($tau$).
+```{r  fig.width=8, fig.height=4, out.width="80%", fig.align='center'}
 t <- seq(0, 20, length.out=100)
 df <- 
   data.frame(x0 = c(0, 0.7, 0.9), S = c(1, 0, 0.5), tau = c(1, 4, 2)) %>%
@@ -66,5 +83,6 @@ ggplot(df, aes(x=t, y=x, color=Parameters)) +
   geom_line() + 
   xlab("dt [s]") +
   ylab("x(t + dt)") + 
-  ylim(0, 1)
+  ylim(0, 1) + 
+  theme(legend.position="top")
 ```
