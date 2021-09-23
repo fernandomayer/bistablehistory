@@ -64,8 +64,7 @@ $$x_i(t + \Delta t) = x_i(t) + (S - x_i(t)) \cdot (1 - e^{-\Delta t/\tau})\\
 x_i(t + \Delta t) = S + (x_i(t) - S)  \cdot e^{-\Delta t/\tau}$$
 
 
-
-The figure below shows accumulation over time for three different initial values ($x(0)$), signal strength ($S$), and and time constants ($tau$).
+The figure below shows accumulation over time for three different initial values ($x(0)$), signal strength ($S$), and and time constants ($tau$). Note that the package allows to either specify and fit both the time constant (argument `tau` in `fit_cumhist()` function) and the initial history value at the block (`history_init` argument).
 ```{r  fig.width=8, fig.height=4, out.width="80%", fig.align='center'}
 t <- seq(0, 20, length.out=100)
 df <- 
@@ -86,3 +85,8 @@ ggplot(df, aes(x=t, y=x, color=Parameters)) +
   ylim(0, 1) + 
   theme(legend.position="top")
 ```
+
+As for a bistable case there are two history states (one for each perceptual state), we compute a history "mixture" as 
+$$H_{mix} = \text{history_mix} \cdot H_{dominant} + (1-\text{history_mix}) \cdot H_{suppressed}$$
+where `history_mix` is a parameter that is either specified (the `fit_cumhist()` function uses a default of `0.2`) or fitted, whereas $H_{dominant}$ and $H_{suppressed}$ are history states for the currently dominant and suppressed states, respectively. _E.g._, if a left eye dominates during following phase, $H_{dominant} = H_{left}$ and $H_{suppressed} = H_{right}$ and vice versa.
+
