@@ -65,8 +65,7 @@
 #' a numeric scalar in 0..1 range or a vector of two numbers in 0..1 range.
 #' In the latter case, two histories will start at different levels.
 #' @param family String, distribution used to fit duration of perceptual dominance
-#' phases. Options include \code{"gamma"} (default), \code{"lognormal"}, \code{"exgauss"}
-#' (exponentially modulated Gaussian), and \code{"normal"}.
+#' phases. Options include \code{"gamma"} (default), \code{"lognormal"}, and \code{"normal"}.
 #' @param chains Number of chains for sampling.
 #' @param cores Number of CPU cores to use for sampling. If omitted, All cores are used.
 #' @param ... Additional arguments passed to [rstan::sampling()][rstan::sampling] function.
@@ -152,10 +151,10 @@ fit_cumhist <- function(data,
   cumhist$data$history_starting_values <- bistablehistory::evaluate_history_init(history_init)
 
   ## --- 6. Family
-  supported_families <- c("gamma"=1, "lognormal"=2, "exgauss"=3, "normal"=4)
+  supported_families <- c("gamma"=1, "lognormal"=2, "normal"=3)
   if (!family %in% names(supported_families)) stop(sprintf("Unsupported distribution family '%s'", family))
   lmN <- c("gamma"=2, "lognormal"=1, "exgauss"=2, "normal"=1)
-  varianceN <- c("gamma"=0, "lognormal"=1, "exgauss"=1, "normal"=1)
+  varianceN <- c("gamma"=0, "lognormal"=1, "normal"=1)
   a_prior <- list("gamma" = matrix(c(log(3), 5, log(3), 5), nrow=2, byrow = TRUE),
                   "lognormal" = matrix(c(log(3), 5), nrow=1, byrow = TRUE),
                   "normal" = matrix(c(3, 5), nrow=1, byrow = TRUE))
