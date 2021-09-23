@@ -41,6 +41,9 @@ predict.cumhist <-  function(object, summary=TRUE, probs=NULL, ...) {
   if (object$family == "gamma") {
     predictions <- exp(lm_params[, 1, ]) * exp(lm_params[, 2, ])
   }
+  else if (object$family == "lognormal") {
+    predictions <- exp(exp(lm_params[, 1, ]) + lm_params[, 2, ] / 2)
+  }
   else if (object$family == "normal") {
     predictions <- lm_params[, 1, ]
   }
