@@ -68,11 +68,10 @@ functions {
 }
 data{
     // --- Family choice ---
-    int<lower=1, upper=6> family; 
+    int<lower=1, upper=3> family; 
     // 1 - Gamma, linear model for both shape and rate
     // 2 - Log normal with linear model for the mean
-    // 3 - Exponentially modulated normal with linear model for the mean and rate
-    // 4 - Normal with linear model for the mean
+    // 3 - Normal with linear model for the mean
 
     // --- Complete time-series ---
     int<lower=1> rowsN;   // Number of rows in the COMPLETE multi-timeseries table including mixed phase.
@@ -108,7 +107,7 @@ data{
 
     // Mixed state
     int<lower=1, upper=4> mixed_state_option; // 1 - constant provided by user, 2 - fit single tau for all, 3 - independent taus, 4 - pooled (multilevel) taus
-    real<lower=0, upper=1> fixed_mixed_state; // a fixed option (tau_option == 1)
+    real<lower=0, upper=1> fixed_mixed_state; // a fixed option (mixed_state_option == 1)
     int mixed_state_mu_size;                  // dimensionality, 1 - sampled, 0 - unused
     int mixed_state_sigma_size;               // dimensionality, 1 - sampled, 0 - unused
     int mixed_state_rnd_size;                 // dimensionality, randomN - sampled, 0 - unused
@@ -116,7 +115,7 @@ data{
 
     // History-mixing proportion, used as history_mix * history_same - (1-history_mix) * history_different
     int<lower=1, upper=4> history_mix_option; // 1 - constant provided by user, 2 - fit single tau for all, 3 - independent taus, 4 - pooled (multilevel) taus
-    real<lower=0, upper=1> fixed_history_mix; // fixed proportion of history mixing (tau_option == 1)
+    real<lower=0, upper=1> fixed_history_mix; // fixed proportion of history mixing (history_mix_option == 1)
     int history_mix_mu_size;                  // dimensionality, 1 - sampled, 0 - unused
     int history_mix_sigma_size;               // dimensionality, 1 - sampled, 0 - unused
     int history_mix_rnd_size;                 // dimensionality, randomN - sampled, 0 - unused
@@ -133,8 +132,7 @@ transformed data {
     // Constants for likelihood index
     int lGamma = 1;
     int lLogNormal = 2;
-    int lExGaussian = 3;
-    int lNormal = 4;
+    int lNormal = 3;
 
     // Constants for sampling options for cumulative history parameters
     int oConstant = 1;
@@ -305,6 +303,8 @@ model {
     // predicting clear durations
     if (family == lGamma) {
         clear_duration ~ gamma(exp(lm_param[1]), exp(lm_param[2]));
+    } else if (family == lLogNormal) {
+        clear_duration ~ lognormal(exp(lm_param[1]), sigma[1]);
     } else if (family == lNormal) {
         clear_duration ~ normal(lm_param[1], sigma[1]);
     }
@@ -314,8 +314,9 @@ generated quantities{
 
     if (family == lGamma) {
         for(iC in 1:clearN) log_lik[iC] = gamma_lpdf(clear_duration[iC] | exp(lm_param[1][iC]), exp(lm_param[2][iC]));
-    }
-    else if (family == lNormal) {
+    } else if (family == lLogNormal) {
+        for(iC in 1:clearN) log_lik[iC] = lognormal_lpdf(clear_duration[iC] | exp(lm_param[1][iC]), sigma[1]);
+    } else if (family == lNormal) {
         for(iC in 1:clearN) log_lik[iC] = normal_lpdf(clear_duration[iC] | lm_param[1][iC], sigma[1]);
     }
 }
