@@ -97,8 +97,7 @@ a numeric scalar in 0..1 range or a vector of two numbers in 0..1 range.
 In the latter case, two histories will start at different levels.}
 
 \item{family}{String, distribution used to fit duration of perceptual dominance
-phases. Options include \code{"gamma"} (default), \code{"lognormal"}, \code{"exgauss"}
-(exponentially modulated Gaussian), and \code{"normal"}.}
+phases. Options include \code{"gamma"} (default), \code{"lognormal"}, and \code{"normal"}.}
 
 \item{chains}{Number of chains for sampling.}
 
