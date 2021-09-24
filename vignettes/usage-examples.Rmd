@@ -2,7 +2,7 @@
 title: "Usage examples"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{usage-examples}
+  %\VignetteIndexEntry{Usage examples}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -141,3 +141,20 @@ The $\mu$ parameter is computed via a linear model with a log link function. Pri
 ### Normal
 $$Duration[i] \sim Normal(\mu[i], \sigma)$$
 The $\mu$ parameter is computed via a linear model. Priors for the intercept are $\alpha ~ Normal(3, 5)$. Prior for $\sigma$ was $\sigma \sim Exponential(1)$.
+
+## Computing and using cumulative history
+If you are interested in the cumulative history itself, you can extract from the fitted object via `extract_history()` function
+```{r eval=FALSE}
+H <- extract_history(gam_fit)
+```
+
+Alternatively, you can skip fittiong and compute history directly using predefined values via `compute_history()`.
+```{r eval=FALSE}
+df <- compute_history(br_singleblock,
+                      state="State",
+                      duration="Duration", 
+                      tau=1,
+                      mixed_state=0.5,
+                      history_init=0)
+```
+
