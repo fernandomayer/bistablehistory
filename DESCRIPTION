@@ -1,6 +1,6 @@
 Package: bistablehistory
 Title: Cumulative History Analaysis For Bistable Perception Timeseries
-Version: 0.0.0.9000
+Version: 1.0.0.0000
 Authors@R: 
     person(given = "Alexander",
            family = "Pastukhov",
@@ -11,8 +11,10 @@ Description: Estimates cumulative history for time-series for continuously
     viewed bistable perceptual rivalry displays. Computes cumulative history
     via a homogeneous first order differential process. I.e., it assumes
     exponential growth/decay of the history as a function time and perceptually
-    dominant state. Supports Gamma, log normal, exponentially modulate Gaussian,
-    and normal distribution families.
+    dominant state, Pastukhov & Braun (2011) <doi:10.1167/11.10.12>.
+    Supports Gamma, log normal, and normal distribution families.
+    Provides a method to compute history directly and example of using the
+    computation on a custom Stan code.
 License: GPL (>= 3)
 URL: https://github.com/alexander-pastukhov/bistablehistory
 BugReports: https://github.com/alexander-pastukhov/bistablehistory/issues
