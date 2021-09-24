@@ -1,6 +1,6 @@
 # Cumulative History Analaysis For Bistable Perception Timeseries
 
-Estimates cumulative history, an estimate of accumulating adaptation / prediction error for the dominant percept,  for time-series for continuously viewed bistable perceptual rivalry displays. Computes cumulative history via a homogeneous first order differential process. I.e., it assumes exponential growth/decay of the history as a function time and perceptually dominant state. Supports Gamma, log normal, and normal distribution families. A package to compute a cumulative history for time-series of perceptual dominance in bistable displays. For details on rationale please refer to [(Pastukhov & Braun, 2011)](https://doi.org/10.1167/11.10.12), see also a vignette on cumulative formula computation.
+Estimates cumulative history, an estimate of accumulating adaptation / prediction error for the dominant percept,  for time-series for continuously viewed bistable perceptual rivalry displays. Computes cumulative history via a homogeneous first order differential process. I.e., it assumes exponential growth/decay of the history as a function time and perceptually dominant state. Supports Gamma, log normal, and normal distribution families. A package to compute a cumulative history for time-series of perceptual dominance in bistable displays. For details on rationale please refer to [(Pastukhov & Braun, 2011)](https://doi.org/10.1167/11.10.12), see also a vignette on cumulative history.
 
 ## Installation
 
@@ -8,8 +8,6 @@ Estimates cumulative history, an estimate of accumulating adaptation / predictio
 library("devtools")
 install_github("alexander-pastukhov/bistablehistory",dependencies=TRUE)
 ```
-
-**Please note that the package is still under development!** It is almost feature-complete, but the documentation is still lacking. It is coming shortly with multiple vignettes on the cumulative history computation and meaning of individual parameters, use of fixed and random effects, use of different distributions, etc. If you run into a mistake or missing a feature, please raise an issue!
 
 ## Usage
 
@@ -40,3 +38,4 @@ and main effect of history for both parameters of gamma distribution
 coef(gamma_fit)
 ```
 
+For further details please see vignettes on package usage and on an example of writing Stan code directly.
