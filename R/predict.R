@@ -16,11 +16,10 @@
 #' @importFrom dplyr bind_cols
 #' @importFrom rlang .data
 #' @importFrom rstan extract
-#' @importFrom stats quantile
+#' @importFrom stats quantile predict
 #' @importFrom tibble tibble as_tibble
 #'
 #' @method predict cumhist
-#' @export predict
 #' @export
 #'
 #' @seealso \code{\link{fit_cumhist}}

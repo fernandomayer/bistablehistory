@@ -13,7 +13,6 @@
 #' @importFrom loo extract_log_lik waic
 #'
 #' @method waic cumhist
-#' @export waic
 #' @export
 #'
 #' @examples
