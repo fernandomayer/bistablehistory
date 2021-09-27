@@ -23,6 +23,8 @@ for a model comparison via loo::loo_compare() function.
 }
 \examples{
 data(br_singleblock)
+\donttest{
 gamma_fit <- fit_cumhist(br_singleblock, state="State", duration="Duration")
 loo_gamma <- loo(gamma_fit)
+}
 }

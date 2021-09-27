@@ -22,6 +22,8 @@ Extracts models population-level coefficients history-specific terms
 for every modeled distribution parameter.
 }
 \examples{
+\donttest{
 br_fit <- fit_cumhist(br_singleblock, state="State", duration="Duration")
 historyef(br_fit)
+}
 }

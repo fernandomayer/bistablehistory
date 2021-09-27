@@ -113,6 +113,8 @@ Fits a generalized linear model using cumulative history and
 specified fixed effects.
 }
 \examples{
+\donttest{
 data(br_singleblock)
 gamma_fit <- fit_cumhist(br_singleblock, state="State", duration="Duration")
+}
 }
