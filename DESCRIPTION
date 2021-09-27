@@ -1,5 +1,5 @@
 Package: bistablehistory
-Title: Cumulative History Analaysis For Bistable Perception Timeseries
+Title: Cumulative History Analysis for Bistable Perception Time Series
 Version: 1.0.0.0000
 Authors@R: 
     person(given = "Alexander",
