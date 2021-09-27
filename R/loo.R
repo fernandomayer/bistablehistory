@@ -14,8 +14,10 @@
 #'
 #' @examples
 #' data(br_singleblock)
+#' \donttest{
 #' gamma_fit <- fit_cumhist(br_singleblock, state="State", duration="Duration")
 #' loo_gamma <- loo(gamma_fit)
+#' }
 loo.cumhist <- function(x, ...) {
   rstan::loo(x$stanfit, cores = future::availableCores())
 }

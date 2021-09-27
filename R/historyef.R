@@ -19,8 +19,10 @@
 #' @export
 #'
 #' @examples
+#' \donttest{
 #' br_fit <- fit_cumhist(br_singleblock, state="State", duration="Duration")
 #' historyef(br_fit)
+#' }
 historyef <- function(object, summary=TRUE, probs=c(0.055, 0.945)){
   if (!is(object, "cumhist")) stop('The object must be of class "cumhist"')
   if (is.null(object$stanfit)) stop("The object has no fitted stan model")
