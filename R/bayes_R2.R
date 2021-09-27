@@ -2,8 +2,8 @@
 #'
 #' For detail refer to:
 #' Andrew Gelman, Ben Goodrich, Jonah Gabry, and Aki Vehtari (2018).
-#' R-squared for Bayesian regression models. The American Statistician,
-#' doi:[10.1080/00031305.2018.1549100](https://doi.org/10.1080/00031305.2018.1549100) and
+#' R-squared for Bayesian regression models. The American Statistician
+#' \doi{10.1080/00031305.2018.1549100} and
 #' [https://avehtari.github.io/bayes_R2/bayes_R2.html](https://avehtari.github.io/bayes_R2/bayes_R2.html)
 #'
 #' @name bayes_R2
