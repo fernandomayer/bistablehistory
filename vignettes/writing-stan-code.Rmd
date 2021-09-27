@@ -14,6 +14,8 @@ knitr::opts_chunk$set(
 )
 ```
 
+The package allows for only limited models as, e.g., neither random slopes, nor interaction effects are allowed. Imposing this restriction was a design decision, as it would require duplicating functionality of general purposes packages. Instead, the package itself provides some basic fitting that should be sufficient for most simple cases. However, below you will find example of how to incorporate cumulative history into a model written in Stan. This way, you can achieve maximal flexibility but still save time by reusing the code.
+
 ## Stan model
 
 This is a complete Stan code for a model with log-normal distribution for multiple runs from a single experimental session of a single participant. The history time-constant `tau` is fitted, whereas constants are used for other cumulative history parameters.
