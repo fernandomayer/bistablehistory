@@ -30,6 +30,41 @@ The package is built using Stan probabilistic programming language [@carpenter20
 # Statement of Need
 Analysis of time series from psychophysical experiments on perceptual experiments, in particular on multistable perception, frequently requires taking into account slow accumulation of adaptation. A typical approach is to use an easy-to-compute approximation via n autocorrelation coefficient [@VanEe2009]. However, such estimates are both less accurate than a first-order process approach [@PastukhovBraun2011] and are harder to use as covariates for the time series analysis. 
 
-Package `bistablehistory` addresses this problem by providing tools that allow to compute an estimate of this process while, optionally, fit its parameters. The estimate could be used for further analysis or directly as part of a statistical (generalized) linear model that is fitted by a package function. 
+Package `bistablehistory` addresses this problem by providing tools that allow to compute an estimate of this process while, optionally, fit its parameters. The estimate could be used for further analysis or directly as part of a statistical (generalized) linear model that is fitted by a package function.
+
+# Usage and Features
+The main function is `fit_cumhist()` that takes a data frame with time-series as a first argument. In addition, you need to specify the name of the column that codes the perceptual state (`state` argument) and a column that holds either dominance phase duration (`duration`) or its onset (`onset`). The code below is a simplest case scenario, fitting data using Gamma distribution (default family) for a single run of a single participant. By default, the function fits time constant for slowly accumulating adaptation but uses default values for other parameters that influence history computation.
+
+```r
+library(bistablehistory)
+data(br_singleblock)
+gamma_fit <- fit_cumhist(br_singleblock,
+                        state="State",
+                        duration="Duration",
+                        refresh=0)
+```
+
+Alternatively, you specify _onset_ of individual dominance phases that will be used to compute their duration.
+```r
+gamma_fit <- fit_cumhist(br_singleblock,
+                        state="State",
+                        onset="Time")
+```
+
+Now you can look at the fitted value for history time constant using `history_tau()`
+```r
+history_tau(gamma_fit)
+```
+
+main effect of history for both parameters of gamma distribution
+```r
+historyef(gamma_fit)
+```
+or exract an estimate of perceptual history / adaptation via `extract_history()` function.
+```r
+H <- extract_history(gam_fit)
+```
+
+A package vignette provide details on including random and fixed factors, as well as on use of cumulative history computation parameters.  
 
 # References
