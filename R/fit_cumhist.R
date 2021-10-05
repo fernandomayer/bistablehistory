@@ -67,9 +67,11 @@
 #' @param family String, distribution used to fit duration of perceptual dominance
 #' phases. Options include \code{"gamma"} (default), \code{"lognormal"}, and \code{"normal"}.
 #' @param chains Number of chains for sampling.
+#' @param history_priors Named list of optional priors for population-level cumulative history
+#' parameters. Must follow the format \code{list("tau"=c(1, 0.15))} with values coding mean
+#' and standard deviation of the normal distribution.
 #' @param cores Number of CPU cores to use for sampling. If omitted, All cores are used.
 #' @param ... Additional arguments passed to [rstan::sampling()][rstan::sampling] function.
-#'
 #' @return  An object of class [cumhist][cumhist-class()]
 #'
 #' @importFrom future availableCores
@@ -94,6 +96,7 @@ fit_cumhist <- function(data,
                         history_mix=0.2,
                         history_init=0,
                         family="gamma",
+                        history_priors=NULL,
                         chains=1,
                         cores=NULL,
                         ...){
@@ -141,13 +144,26 @@ fit_cumhist <- function(data,
   }
 
   ## --- 4. History parameters ---
+  # using history priors, if supplied
+  default_priors <- list("tau_prior"=c(log(1), 0.15),
+                         "mixed_state_prior"=c(0, 1),
+                         "history_mix_prior"=c(0, 1))
+  for(param_name in names(history_priors)){
+    if (paste0(param_name, "_prior") %in% names(default_priors)) {
+      # check validity priors
+      bistablehistory::check_normal_prior(history_priors[[param_name]], param_name)
+
+      # use custom priors
+      default_priors[[paste0(param_name, "_prior")]] <- history_priors[[param_name]]
+    }
+  }
+
   cumhist$data <- c(cumhist$data,
                     bistablehistory::evaluate_history_option("tau", tau, cumhist$data$randomN, Inf),
                     bistablehistory::evaluate_history_option("mixed_state", mixed_state, cumhist$data$randomN, 1),
                     bistablehistory::evaluate_history_option("history_mix", history_mix, cumhist$data$randomN, 1),
-                    list("tau_prior"=c(log(1), 0.75),
-                         "mixed_state_prior"=c(0, 1),
-                         "history_mix_prior"=c(0, 1)))
+                    default_priors)
+
 
   # --- 5. Check history_init
   cumhist$data$history_starting_values <- bistablehistory::evaluate_history_init(history_init)
