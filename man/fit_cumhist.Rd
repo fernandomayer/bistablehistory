@@ -18,6 +18,7 @@ fit_cumhist(
   history_mix = 0.2,
   history_init = 0,
   family = "gamma",
+  history_priors = NULL,
   chains = 1,
   cores = NULL,
   ...
@@ -98,6 +99,10 @@ In the latter case, two histories will start at different levels.}
 
 \item{family}{String, distribution used to fit duration of perceptual dominance
 phases. Options include \code{"gamma"} (default), \code{"lognormal"}, and \code{"normal"}.}
+
+\item{history_priors}{Named list of optional priors for population-level cumulative history
+parameters. Must follow the format \code{list("tau"=c(1, 0.15))} with values coding mean
+and standard deviation of the normal distribution.}
 
 \item{chains}{Number of chains for sampling.}
 
