@@ -65,7 +65,6 @@ data{
     // --- Random effects ---
     int<lower=1> randomN;                               // Number of levels for random effects
     int<lower=1, upper=randomN> irandom[rowsN];         // Index of a random effect cluster (participant, display, etc.)
-    int<lower=1, upper=randomN> irandom_clear[clearN];  // Index of a random effect cluster (participant, display, etc.)
 
     // --- Fixed effects ---
     int<lower=0> fixedN;
