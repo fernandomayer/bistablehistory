@@ -3,6 +3,6 @@
 * Initial CRAN Release
 
 # bistablehistory 1.0.1
-## Improvement
+## Improvements
 * Custom prior values for history parameters
-
+* Simplified Stan code
