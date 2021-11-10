@@ -13,7 +13,7 @@ For developmental version use
 
 ```r
 library("devtools")
-install_github("alexander-pastukhov/bistablehistory",dependencies=TRUE)
+install_github("alexander-pastukhov/bistablehistory", dependencies=TRUE)
 ```
 
 ## Usage
