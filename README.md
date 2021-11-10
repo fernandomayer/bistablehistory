@@ -4,6 +4,13 @@ Estimates cumulative history, an estimate of accumulating adaptation / predictio
 
 ## Installation
 
+For current stable version use
+```r
+install.packages("bistablehistory")
+```
+
+For developmental version use
+
 ```r
 library("devtools")
 install_github("alexander-pastukhov/bistablehistory",dependencies=TRUE)
