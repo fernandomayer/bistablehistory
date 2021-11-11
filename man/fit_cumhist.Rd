@@ -19,6 +19,7 @@ fit_cumhist(
   history_init = 0,
   family = "gamma",
   history_priors = NULL,
+  intercept_priors = NULL,
   chains = 1,
   cores = NULL,
   ...
@@ -103,6 +104,9 @@ phases. Options include \code{"gamma"} (default), \code{"lognormal"}, and \code{
 \item{history_priors}{Named list of optional priors for population-level cumulative history
 parameters. Must follow the format \code{list("tau"=c(1, 0.15))} with values coding mean
 and standard deviation of the normal distribution.}
+
+\item{intercept_priors}{A vector of optional priors for population-level intercept
+parameter. Should be \code{c(<shape-mean>, <shape-sd>, <scale-mean>, <scale-sd>)}}
 
 \item{chains}{Number of chains for sampling.}
 
