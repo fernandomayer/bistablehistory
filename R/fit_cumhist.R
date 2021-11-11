@@ -153,13 +153,17 @@ fit_cumhist <- function(data,
   default_priors <- list("tau_prior"=c(log(1), 0.15),
                          "mixed_state_prior"=c(0, 1),
                          "history_mix_prior"=c(0, 1))
-  for(param_name in names(history_priors)){
-    if (paste0(param_name, "_prior") %in% names(default_priors)) {
-      # check validity priors
-      bistablehistory::check_normal_prior(history_priors[[param_name]], param_name)
+  if (!is.null(history_priors)){
+    if (!is.list(history_priors)) stop("history_priors parameters must be a named list")
+    if (is.null(names(history_priors))) stop("history_priors parameters must be a named list")
+    for(param_name in names(history_priors)){
+      if (paste0(param_name, "_prior") %in% names(default_priors)) {
+        # check validity priors
+        bistablehistory::check_normal_prior(history_priors[[param_name]], param_name)
 
-      # use custom priors
-      default_priors[[paste0(param_name, "_prior")]] <- history_priors[[param_name]]
+        # use custom priors
+        default_priors[[paste0(param_name, "_prior")]] <- history_priors[[param_name]]
+      }
     }
   }
 
