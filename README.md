@@ -29,6 +29,26 @@ library("devtools")
 install_github("alexander-pastukhov/bistablehistory", dependencies=TRUE)
 ```
 
+### Note
+
+This package uses [Stan](https://mc-stan.org), a "state-of-the-art
+platform for statistical modeling and high-performance statistical
+computation". Therefore, it depends on the package
+[rstantools](https://cran.r-project.org/package=rstantools), which in
+turn depends on the [rstan](https://cran.r-project.org/package=rstan)
+package, which uses the [V8 JavaScript library](https://v8.dev), through
+the [V8 R package](https://cran.r-project.org/package=V8).
+
+Therefore, you will need to install the V8 JavaScript library on your
+system, and it is recommended that you also install the V8 R package
+beforehand. For detailed instructions, please see
+https://github.com/jeroen/v8.
+
+You will also need the [R package
+curl](https://cran.r-project.org/package=curl), which depends on
+`libcurl-*` in various operating systems. Please see the documentation
+at https://cran.r-project.org/package=curl.
+
 ## Usage
 
 The main function is `fit_cumhist` that takes a data frame with
