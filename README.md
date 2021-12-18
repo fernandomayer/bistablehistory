@@ -31,31 +31,49 @@ install_github("alexander-pastukhov/bistablehistory", dependencies=TRUE)
 
 ## Usage
 
-The main function is `fit_cumhist` that takes a data frame with time-series as a first argument. Minimally, you need to specify `state` --- string with the column name that encodes perceptually dominant state --- and either `duration` (column name with duration of individual dominance phases) or `onset` (column name with onset times of individual dominance phases). Thus, for a simplest case of a single subject and single run/block measurement with all defaults (gamma distribution, fitted cumulative history time constant but fixed mixed state value and history mixing proportion) the call would be
+The main function is `fit_cumhist` that takes a data frame with
+time-series as the first argument. Minimally, you need to specify `state`
+--- string with the column name that encodes perceptually dominant state
+--- and either `duration` (column name with duration of individual
+dominance phases) or `onset` (column name with onset times of individual
+dominance phases). Thus, for a simplest case of a single subject and
+single run/block measurement with all defaults (gamma distribution,
+fitted cumulative history time constant but fixed mixed state value and
+history mixing proportion) the call would be
+
 ```r
 library(bistablehistory)
 data(br_singleblock)
 gamma_fit <- fit_cumhist(br_singleblock,
-                        state="State",
-                        duration="Duration")
+                         state = "State",
+                         duration = "Duration")
 ```
+
 or, equivalently
+
 ```r
 library(bistablehistory)
 data(br_singleblock)
 gamma_fit <- fit_cumhist(br_singleblock,
-                        state="State",
-                        onset="Time")
+                         state = "State",
+                         onset = "Time")
 ```
 
 Now you can look at the fitted value for history time constant via
+
 ```r
 history_tau(gamma_fit)
 ```
 
 and main effect of history for both parameters of gamma distribution
+
 ```r
 coef(gamma_fit)
 ```
 
-For further details please see vignettes on package usage and on an example of writing Stan code directly.
+For further details please see vignettes on package usage ((Usage
+examples)[https://cran.r-project.org/web/packages/bistablehistory/vignettes/usage-examples.html]
+and (Cumulative
+history)[https://cran.r-project.org/web/packages/bistablehistory/vignettes/cumulative-history.html])
+and on an example of writing Stan code directly ((Writing Stan
+code)[https://cran.r-project.org/web/packages/bistablehistory/vignettes/writing-stan-code.html]).
