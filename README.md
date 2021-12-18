@@ -12,7 +12,7 @@ of time and perceptually dominant state. Supports Gamma, log normal, and
 normal distribution families.
 
 For details on rationale please refer to
-(Pastukhov & Braun, 2011)[https://doi.org/10.1167/11.10.12].
+([Pastukhov & Braun, 2011](https://doi.org/10.1167/11.10.12)).
 
 ## Installation
 
@@ -71,9 +71,9 @@ and main effect of history for both parameters of gamma distribution
 coef(gamma_fit)
 ```
 
-For further details please see vignettes on package usage ((Usage
-examples)[https://cran.r-project.org/web/packages/bistablehistory/vignettes/usage-examples.html]
-and (Cumulative
-history)[https://cran.r-project.org/web/packages/bistablehistory/vignettes/cumulative-history.html])
-and on an example of writing Stan code directly ((Writing Stan
-code)[https://cran.r-project.org/web/packages/bistablehistory/vignettes/writing-stan-code.html]).
+For further details please see vignettes on package usage ([Usage
+examples](https://cran.r-project.org/web/packages/bistablehistory/vignettes/usage-examples.html)
+and [Cumulative
+history](https://cran.r-project.org/web/packages/bistablehistory/vignettes/cumulative-history.html))
+and on an example of writing Stan code directly ([Writing Stan
+code](https://cran.r-project.org/web/packages/bistablehistory/vignettes/writing-stan-code.html)).
