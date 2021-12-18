@@ -1,14 +1,28 @@
 # Cumulative History Analaysis For Bistable Perception Time Series
 
-Estimates cumulative history, an estimate of accumulating adaptation / prediction error for the dominant percept,  for time-series for continuously viewed bistable perceptual rivalry displays. Computes cumulative history via a homogeneous first order differential process. I.e., it assumes exponential growth/decay of the history as a function time and perceptually dominant state. Supports Gamma, log normal, and normal distribution families. A package to compute a cumulative history for time-series of perceptual dominance in bistable displays. For details on rationale please refer to (Pastukhov & Braun, 2011) \doi{10.1167/11.10.12}, see also a vignette on cumulative history.
+A package to compute a cumulative history for time-series of perceptual
+dominance in bistable displays.
+
+Estimates cumulative history, an estimate of accumulating
+adaptation/prediction error for the dominant percept, for time-series
+for continuously viewed bistable perceptual rivalry displays. Computes
+cumulative history via a homogeneous first order differential process.
+I.e., it assumes exponential growth/decay of the history as a function
+of time and perceptually dominant state. Supports Gamma, log normal, and
+normal distribution families.
+
+For details on rationale please refer to
+(Pastukhov & Braun, 2011)[https://doi.org/10.1167/11.10.12].
 
 ## Installation
+
 For current stable version use
+
 ```r
 install.packages("bistablehistory")
 ```
 
-The master branch is the developmental version. To install it please use
+The master branch is the development version. To install it please use
 
 ```r
 library("devtools")
