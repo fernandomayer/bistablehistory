@@ -1,4 +1,4 @@
-# Cumulative History Analaysis For Bistable Perception Time Series
+# Cumulative History Analysis For Bistable Perception Time Series
 
 A package to compute a cumulative history for time-series of perceptual
 dominance in bistable displays.
@@ -26,7 +26,7 @@ The master branch is the development version. To install it please use
 
 ```r
 library("devtools")
-install_github("alexander-pastukhov/bistablehistory", dependencies=TRUE)
+install_github("alexander-pastukhov/bistablehistory", dependencies = TRUE)
 ```
 
 ### Note
